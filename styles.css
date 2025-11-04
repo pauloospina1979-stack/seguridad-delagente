@@ -29,3 +29,51 @@ body{margin:0;font:16px/1.5 system-ui,Segoe UI,Roboto,Inter;color:var(--text);ba
 .cat-meta{color:var(--muted);font-size:13px;margin-top:4px}
 .footer{padding:20px;text-align:center;color:var(--muted);border-top:1px solid #eee;margin-top:28px}
 .hidden{display:none}
+/* --- Métricas --- */
+.metrics { margin-top: 2rem; }
+.charts-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.chart-card {
+  background: #0b0b0b; /* negro principal */
+  color: #fff;
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  border: 1px solid #1e1e1e;
+}
+.chart-card h3 { margin: .25rem 0 1rem; font-weight: 600; }
+
+/* Mejoras de tarjetas de categorías */
+.category-card {
+  background: #111;
+  color: #e9e9e9;
+  border: 1px solid #1f1f1f;
+  border-radius: 16px;
+  padding: 1rem;
+}
+.category-card h3 {
+  color: #e4ffcf; /* acento sutil para títulos */
+}
+.item-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: start;
+  gap: .75rem;
+  padding: .5rem 0;
+  border-bottom: 1px dashed #262626;
+}
+.item-row:last-child { border-bottom: 0; }
+
+/* Badges de conteo */
+.badge {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  background: #1a4d1a;
+  color: #c9ffd1;
+  border: 1px solid #2a6e2a;
+}

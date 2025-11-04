@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="styles.css" />
   <!-- Librerías de ayuda (ligeras) -->
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <!-- Charts y YAML parser vía CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -32,6 +35,25 @@
 
     <section id="checklist" class="checklist"></section>
   </main>
+    <section class="metrics container">
+  <h2>Indicadores</h2>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Avance por categoría</h3>
+      <canvas id="chartCompletionByCategory"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Distribución de ítems</h3>
+      <canvas id="chartItemsDistribution"></canvas>
+    </div>
+  </div>
+ </section>
+ 
+ <section class="container">
+  <h2>Checklist</h2>
+  <div id="checklist-root"></div>
+</section>
+
 
   <footer class="footer">
     <small>© Comfenalco Valle – DeLaGente • Basado en listas públicas de buenas prácticas.</small>
