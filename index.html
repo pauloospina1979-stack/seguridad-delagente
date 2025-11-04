@@ -5,119 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Seguridad DeLaGente</title>
   <link rel="icon" href="favicon.ico" />
-  <!-- Fuente y estilos base -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
   <style>
     :root{
-      --bg:#ffffff;
-      --card:#ffffff;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --brand:#111111;       /* negro de marca */
-      --accent:#0ea5e9;      /* azul claro para detalles */
-      --progress:#16a34a;    /* verde progreso */
+      --bg:#ffffff; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
+      --brand:#111111; --accent:#0ea5e9; --progress:#16a34a;
     }
     body.dark{
-      --bg:#0f1115;
-      --card:#12161c;
-      --text:#e5e7eb;
-      --muted:#9aa3b2;
-      --border:#202532;
-      --brand:#111111;
-      --accent:#38bdf8;
-      --progress:#22c55e;
+      --bg:#0f1115; --card:#12161c; --text:#e5e7eb; --muted:#9aa3b2; --border:#202532;
+      --brand:#111111; --accent:#38bdf8; --progress:#22c55e;
     }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
-      line-height:1.45;
-    }
-
-    header{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--border);
-      background:var(--card);
-      position:sticky; top:0; z-index:10;
-    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";line-height:1.45}
+    header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10}
     header img{height:34px}
-    header h1{font-size:20px; margin:0; font-weight:700}
+    header h1{font-size:20px;margin:0;font-weight:700}
     .spacer{flex:1}
-    .btn{
-      background:#111; color:#fff; border:none; border-radius:999px;
-      padding:10px 16px; font-weight:600; cursor:pointer;
-    }
-    body.dark .btn{ background:#fff; color:#111 }
-    .ghost{
-      background:transparent; color:var(--text); border:1px solid var(--border)
-    }
-
-    main{max-width:1050px; margin:24px auto; padding:0 16px}
-
-    .sub{color:var(--muted); margin-top:4px}
-    .toolbar{display:flex; gap:10px; margin:16px 0 10px; flex-wrap:wrap; align-items:center}
-
-    .search{
-      width:min(820px,100%); padding:12px 14px; border-radius:12px;
-      border:1px solid var(--border); background:var(--card); color:var(--text);
-    }
-
+    .btn{background:#111;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer}
+    body.dark .btn{background:#fff;color:#111}
+    .ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+    main{max-width:1050px;margin:24px auto;padding:0 16px}
+    .sub{color:var(--muted);margin-top:4px}
+    .toolbar{display:flex;gap:10px;margin:16px 0 10px;flex-wrap:wrap;align-items:center}
+    .search{width:min(820px,100%);padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text)}
     .progress-wrap{margin:8px 0 18px}
-    .progress-top{display:flex; justify-content:space-between; align-items:center; font-size:14px; color:var(--muted); margin-bottom:8px}
-    .bar{height:10px; background:var(--border); border-radius:999px; overflow:hidden}
-    .bar>div{height:100%; width:0%; background:linear-gradient(90deg,var(--progress),#4ade80); transition:width .3s ease}
-
-    /* --- Tarjetas de gráficos --- */
-    .charts{
-      display:grid; grid-template-columns:1fr; gap:14px; margin:18px 0 24px;
-    }
-    @media (min-width:900px){ .charts{ grid-template-columns:1fr 1fr } }
-    .chart-card{
-      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px;
-    }
-    .chart-card h3{margin:0 0 10px 0; font-size:18px}
-
-    /* --- Checklist --- */
-    .category{
-      background:var(--card); border:1px solid var(--border); border-radius:14px; margin:18px 0;
-      padding:10px 0 6px;
-    }
-    .category h2{font-size:24px; margin:10px 14px 2px}
-    .category .hint{color:var(--muted); margin:0 14px 8px}
-    .cat-progress{
-      display:inline-block; margin:0 14px 8px; font-size:14px; color:#fff; background:var(--brand);
-      padding:6px 10px; border-radius:999px;
-    }
-    .item{
-      display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start;
-      border-top:1px dashed var(--border); padding:14px; cursor:pointer;
-    }
-    .item:hover{background:color-mix(in srgb, var(--card), var(--brand) 6%)}
-    .item input{margin-top:5px; width:20px; height:20px}
+    .progress-top{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);margin-bottom:8px}
+    .bar{height:10px;background:var(--border);border-radius:999px;overflow:hidden}
+    .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--progress),#4ade80);transition:width .3s ease}
+    .charts{display:grid;grid-template-columns:1fr;gap:14px;margin:18px 0 24px}
+    @media (min-width:900px){.charts{grid-template-columns:1fr 1fr}}
+    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+    .chart-card h3{margin:0 0 10px 0;font-size:18px}
+    .category{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:18px 0;padding:10px 0 6px}
+    .category h2{font-size:24px;margin:10px 14px 2px}
+    .category .hint{color:var(--muted);margin:0 14px 8px}
+    .cat-progress{display:inline-block;margin:0 14px 8px;font-size:14px;color:#fff;background:var(--brand);padding:6px 10px;border-radius:999px}
+    .item{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;border-top:1px dashed var(--border);padding:14px;cursor:pointer}
+    .item:hover{background:rgba(17,17,17,.06)}
+    body.dark .item:hover{background:rgba(255,255,255,.06)}
+    .item input{margin-top:5px;width:20px;height:20px}
     .item .title{font-weight:600}
-    .item .desc{color:var(--muted); margin-top:4px}
-    .item a{color:var(--accent); text-decoration:none; font-weight:600}
-
-    footer{color:var(--muted); font-size:12px; text-align:center; margin:28px 0 60px}
+    .item .desc{color:var(--muted);margin-top:4px}
+    .item a{color:var(--accent);text-decoration:none;font-weight:600}
+    footer{color:var(--muted);font-size:12px;text-align:center;margin:28px 0 60px}
   </style>
-
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-
   <header>
-    <img src="logo.png" alt="Comfenalco Valle">
+    <!-- usa .jpg sin espacios -->
+    <img src="logo-comfenalco.jpg" alt="Comfenalco Valle">
     <h1>Seguridad DeLaGente</h1>
     <div class="spacer"></div>
     <button id="btnTheme" class="btn ghost" aria-label="Cambiar tema">🌙 Tema oscuro</button>
@@ -131,7 +70,6 @@
       <input id="search" class="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)…" />
     </div>
 
-    <!-- Progreso global -->
     <div class="progress-wrap">
       <div class="progress-top">
         <div><strong id="progressText">Progreso: 0%</strong> <span id="progressCount" class="sub">(0/0)</span></div>
@@ -140,7 +78,7 @@
       <div class="bar"><div id="progressBar"></div></div>
     </div>
 
-    <!-- ===================== GRÁFICOS (ANTES DEL CHECKLIST) ===================== -->
+    <!-- GRÁFICOS -->
     <section class="charts" aria-label="Indicadores">
       <div class="chart-card">
         <h3>Avance por categoría</h3>
@@ -151,9 +89,8 @@
         <canvas id="chartItemsDistribution" height="140"></canvas>
       </div>
     </section>
-    <!-- ========================================================================== -->
 
-    <!-- Checklist -->
+    <!-- CHECKLIST -->
     <div id="lista"></div>
 
     <footer>© Comfenalco Valle delagente — Seguridad DeLaGente</footer>
