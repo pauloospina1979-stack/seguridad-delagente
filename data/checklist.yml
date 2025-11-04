@@ -1,0 +1,205 @@
+title: Seguridad DeLaGente
+categories:
+  - slug: cuentas
+    title: Cuentas y contraseñas
+    description: Fortalece credenciales, MFA y recuperación.
+    items:
+      - slug: gestor
+        title: Usa un gestor de contraseñas
+        description: Mantén contraseñas únicas y fuertes para cada servicio.
+        links:
+          - label: Guía EFF
+            url: https://ssd.eff.org/es/module/crea-y-gestiona-contrasenas-seguras
+      - slug: mfa
+        title: Activa MFA/TOTP o llave física
+        description: Evita SMS si es posible y guarda códigos de recuperación.
+      - slug: password-length
+        title: Contraseñas largas (≥14) o passphrases
+        description: No reutilices contraseñas entre servicios críticos.
+      - slug: recovery
+        title: Revisa métodos de recuperación
+        description: Correo alterno y teléfono vigentes y bajo tu control.
+      - slug: sesiones
+        title: Cierra sesiones en dispositivos que no usas
+        description: Revisa "Dispositivos" o "Sesiones activas" en cada cuenta.
+      - slug: auditoria-credenciales
+        title: Cambia contraseñas filtradas
+        description: Verifica si tu email apareció en brechas y rota credenciales.
+        links:
+          - label: Have I Been Pwned
+            url: https://haveibeenpwned.com/
+
+  - slug: email-phishing
+    title: Correo y phishing
+    description: Reduce riesgos en el principal vector de ataque.
+    items:
+      - slug: filtros-spam
+        title: Activa filtros de spam y advertencias de enlaces sospechosos
+      - slug: dominios-sospechosos
+        title: Verifica remitente y dominio antes de hacer clic
+        description: Sospecha de urgencias, adjuntos inesperados y acortadores.
+      - slug: verificacion-bancos
+        title: Nunca ingreses por enlaces de correos de bancos
+        description: Escribe la URL manualmente o usa marcadores.
+      - slug: adjuntos
+        title: Abre adjuntos solo si confías en el remitente
+        description: Prefiere verlos en la nube (vista previa) cuando sea posible.
+      - slug: dmarc
+        title: Para dominios propios, configura SPF/DKIM/DMARC
+        description: Mejora la reputación del correo saliente.
+
+  - slug: dispositivos
+    title: Dispositivos
+    description: Actualizaciones, cifrado y bloqueo.
+    items:
+      - slug: updates
+        title: Habilita actualizaciones automáticas
+        description: Sistema, navegador, antivirus/EDR y apps críticas.
+      - slug: cifrado
+        title: Activa cifrado de disco (BitLocker/FileVault/Linux LUKS)
+      - slug: bloqueo
+        title: Bloqueo automático y biometría/PIN
+      - slug: admin-user
+        title: No uses cuenta administradora para el día a día
+      - slug: antivirus
+        title: Mantén protección en tiempo real
+        description: Revisa que la licencia/firmas estén al día.
+      - slug: geolocalizacion
+        title: Habilita “Encontrar mi dispositivo” y borrado remoto
+
+  - slug: navegacion
+    title: Navegación y privacidad
+    description: Minimiza rastreo y exposición innecesaria.
+    items:
+      - slug: navegador-actualizado
+        title: Usa navegadores actualizados (Chrome/Edge/Firefox/Safari)
+      - slug: extensiones
+        title: Instala solo extensiones necesarias y confiables
+      - slug: dns
+        title: Usa DNS seguro (DoH/DoT) o el de tu organización
+      - slug: https
+        title: Prefiere sitios con HTTPS y candado válido
+      - slug: anti-tracking
+        title: Activa protección anti-tracking y bloqueo de pop-ups
+
+  - slug: redes
+    title: Redes y Wi-Fi
+    description: Configura routers/APs de forma segura.
+    items:
+      - slug: wifi-pass
+        title: Cambia la contraseña por defecto del router
+      - slug: wifi-encryption
+        title: Usa WPA2/WPA3 y desactiva WPS
+      - slug: guests
+        title: Crea red de invitados para visitas y dispositivos IoT
+      - slug: upd-router
+        title: Actualiza firmware del router/AP periódicamente
+      - slug: admin-panel
+        title: Deshabilita administración remota si no la usas
+
+  - slug: nube
+    title: Nube y compartición
+    description: Controla permisos y versiones en nube.
+    items:
+      - slug: compartir
+        title: Comparte con emails específicos, evita “público”
+      - slug: vencimiento
+        title: Pon vencimiento a enlaces compartidos sensibles
+      - slug: versionado
+        title: Habilita versionado y papelera (recuperación)
+      - slug: mfa-nube
+        title: Activa MFA en cuentas de nube (Google/Microsoft/Dropbox)
+      - slug: auditoria
+        title: Revisa actividad y dispositivos conectados a la nube
+
+  - slug: backups
+    title: Copias de seguridad
+    description: Copia 3-2-1 y pruebas de restauración.
+    items:
+      - slug: 321
+        title: Aplica regla 3-2-1
+        description: 3 copias, 2 medios, 1 fuera de línea/ubicación.
+      - slug: schedule
+        title: Programa copias automáticas
+      - slug: prueba-restauracion
+        title: Prueba restaurar archivos al menos 1 vez por trimestre
+      - slug: cifrado-backup
+        title: Cifra los respaldos y protege las claves
+      - slug: ransomware
+        title: Mantén una copia inmutable/offline contra ransomware
+
+  - slug: mensajeria
+    title: Mensajería y videollamadas
+    description: End-to-end, verificación y configuración.
+    items:
+      - slug: e2e
+        title: Prefiere apps con cifrado E2E para chats privados
+      - slug: 2fa-mensajeria
+        title: Activa verificación en dos pasos de la app
+      - slug: privacidad-perfil
+        title: Limita quién puede ver tu foto/estado/última vez
+      - slug: enlaces
+        title: Evita unirte a grupos por enlaces públicos
+      - slug: backups-chat
+        title: Si haces copia de chats, protégela con contraseña
+
+  - slug: redes-sociales
+    title: Redes sociales
+    description: Minimiza exposición y suplantación.
+    items:
+      - slug: privacidad
+        title: Revisa privacidad de perfiles y publicaciones
+      - slug: verificacion
+        title: Activa 2FA y alertas de inicio de sesión
+      - slug: suplantacion
+        title: Reporta cuentas falsas e informa a tus contactos
+      - slug: geo
+        title: Evita publicar ubicación en tiempo real
+      - slug: apps-terceros
+        title: Revoca accesos de apps de terceros que no uses
+
+  - slug: compras-pagos
+    title: Compras y pagos
+    description: Reduce fraude en transacciones.
+    items:
+      - slug: tarjetas-virtuales
+        title: Usa tarjetas virtuales/limite por compra si tu banco lo ofrece
+      - slug: alertas-bancarias
+        title: Activa notificaciones de movimientos y topes
+      - slug: sitios-oficiales
+        title: Compra solo en sitios oficiales y con HTTPS válido
+      - slug: devoluciones
+        title: Conoce políticas de devolución y soporte
+      - slug: pishing-pagos
+        title: Nunca compartas códigos OTP por chat/llamada
+
+  - slug: incidentes
+    title: Incidentes y respuesta
+    description: Qué hacer ante pérdida, malware o filtración.
+    items:
+      - slug: plan
+        title: Ten un plan breve de respuesta
+        description: A quién avisar, qué cambiar, cómo aislar equipos.
+      - slug: bloqueo-remoto
+        title: Activa borrado/bloqueo remoto en móviles y laptops
+      - slug: reseteo-cred
+        title: Cambia credenciales y revoca tokens/sesiones
+      - slug: denuncia
+        title: Documenta evidencias y, si aplica, denuncia
+      - slug: aprendizaje
+        title: Después del incidente, documenta lecciones aprendidas
+
+  - slug: familia-ninos
+    title: Familia y niños
+    description: Controles y educación digital.
+    items:
+      - slug: cuentas-menores
+        title: Cuentas para menores con controles parentales
+      - slug: tiempo-pantalla
+        title: Configura límites de tiempo y contenido
+      - slug: ubicacion
+        title: Habla sobre privacidad de ubicación y fotos
+      - slug: estafas-juegos
+        title: Advierte sobre estafas en juegos y compras integradas
+      - slug: dialogo
+        title: Mantén canales abiertos para pedir ayuda

@@ -1,0 +1,41 @@
+backend:
+  name: github
+  repo: TU_USUARIO/TU_REPO        # p.ej.: pauloospina1979-stack/seguridad-delagente
+  branch: main
+
+media_folder: "img"
+public_folder: "/img"
+
+collections:
+  - name: "checklist"
+    label: "Checklist"
+    delete: false
+    editor:
+      preview: false
+    files:
+      - file: "data/checklist.yml"
+        label: "Listado principal"
+        name: "root"
+        fields:
+          - {label: "Título", name: "title", widget: "string"}
+          - label: "Categorías"
+            name: "categories"
+            widget: "list"
+            fields:
+              - {label: "Slug", name: "slug", widget: "string"}
+              - {label: "Título", name: "title", widget: "string"}
+              - {label: "Descripción", name: "description", widget: "text", required: false}
+              - label: "Items"
+                name: "items"
+                widget: "list"
+                fields:
+                  - {label: "Slug", name: "slug", widget: "string"}
+                  - {label: "Título", name: "title", widget: "string"}
+                  - {label: "Descripción", name: "description", widget: "text", required: false}
+                  - label: "Enlaces"
+                    name: "links"
+                    widget: "list"
+                    required: false
+                    fields:
+                      - {label: "Etiqueta", name: "label", widget: "string", required: false}
+                      - {label: "URL", name: "url", widget: "string"}
