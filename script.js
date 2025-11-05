@@ -1,379 +1,268 @@
-/*******************************
- * Seguridad DeLaGente – Lógico
- * - Modo claro/oscuro con persistencia
- * - Checklist con progreso
- * - Gráficos (Chart.js) antes del checklist
- *******************************/
+// ======== SUPABASE ========
+const supabase = window.supabase.createClient(
+  window.SUPABASE_URL,
+  window.SUPABASE_ANON_KEY
+);
 
-/* ===========================
-   0) Datos (puedes editar)
-   =========================== */
-
-// 👇 Aquí puedes añadir/editar ítems. Si ya tenías un listado más grande,
-// simplemente reemplaza el contenido del arreglo CATEGORIES por el tuyo.
+// ======== DATOS DEL CHECKLIST (ejemplo corto; añade los tuyos) ========
 const CATEGORIES = [
   {
-    name: "Cuentas y contraseñas",
-    hint: "Fortalece credenciales, MFA y recuperación.",
+    id: "cuentas",
+    title: "Cuentas y contraseñas",
+    desc: "Fortalece credenciales, MFA y recuperación.",
     items: [
-      { t: "Usa un gestor de contraseñas", d: "Mantén contraseñas únicas y fuertes para cada servicio.", link: "https://ssd.eff.org/es/module/primeros-pasos-con-un-gestor-de-contrasenas" },
-      { t: "Activa MFA/TOTP o llave física", d: "Evita SMS si es posible y guarda códigos de recuperación." },
-      { t: "Contraseñas largas (≥14) o passphrases", d: "No reutilices contraseñas entre servicios críticos." },
-      { t: "Revisa métodos de recuperación", d: "Correo alterno y teléfono vigente bajo tu control." }
+      { id: "gestor_pass", text: "Usa un gestor de contraseñas", help: "Guía EFF", link: "https://ssd.eff.org" },
+      { id: "mfa", text: "Activa MFA/TOTP o llave física" },
+      { id: "pass_largas", text: "Contraseñas largas (≥14) o passphrases" },
+      { id: "recuperacion", text: "Revisa métodos de recuperación" },
+      { id: "cierres_sesiones", text: "Cierra sesiones en dispositivos que no usas" },
+      { id: "no_reciclar", text: "No reutilices contraseñas" }
     ]
   },
-  {
-    name: "Correo y phishing",
-    hint: "Señales de estafa, adjuntos y remitentes.",
-    items: [
-      { t: "Desconfía de urgencias y premios", d: "Evita enlaces sospechosos; confirma por otro canal." },
-      { t: "Verifica dominio del remitente", d: "Los atacantes imitan nombres; revisa la dirección real." },
-      { t: "No abras adjuntos desconocidos", d: "Especialmente .exe, .msi, .js, .scr, .iso." },
-      { t: "Reporta correos sospechosos", d: "Usa el canal oficial de tu organización." }
-    ]
-  },
-  {
-    name: "Dispositivos",
-    hint: "Actualizaciones, bloqueo y cifrado.",
-    items: [
-      { t: "Mantén el sistema actualizado", d: "Activa actualizaciones automáticas." },
-      { t: "Bloqueo con PIN/biometría", d: "Configura bloqueo automático tras inactividad." },
-      { t: "Cifrado del disco", d: "BitLocker/FileVault/Android/iOS encendido." },
-      { t: "Evita USB desconocidos", d: "Pueden traer malware o BadUSB." }
-    ]
-  },
-  {
-    name: "Navegación y privacidad",
-    hint: "Rastreo, cookies y permisos.",
-    items: [
-      { t: "Navegador actualizado", d: "Chrome/Edge/Firefox/Safari al día." },
-      { t: "Bloqueo de rastreadores", d: "Activa protección de seguimiento y cookies de terceros." },
-      { t: "Revisa permisos de extensiones", d: "Desinstala las que no uses o sean sospechosas." },
-      { t: "Usa HTTPS", d: "Evita enviar datos en sitios sin candado/https." }
-    ]
-  },
-  {
-    name: "Redes y Wi-Fi",
-    hint: "Routers, invitados y públicos.",
-    items: [
-      { t: "Cambia contraseña de router", d: "Evita contraseñas por defecto." },
-      { t: "Actualiza el firmware", d: "Revisa actualizaciones del fabricante." },
-      { t: "Red de invitados", d: "Aísla tus dispositivos de IoT/visitantes." },
-      { t: "Evita redes públicas sin VPN", d: "No uses banca/correos sensibles en abierto." }
-    ]
-  },
-  {
-    name: "Nube y compartición",
-    hint: "Enlaces y permisos.",
-    items: [
-      { t: "Revisa enlaces compartidos", d: "Usa caducidad y solo lectura si aplica." },
-      { t: "Carpetas con mínimo privilegio", d: "Solo quien lo necesita." },
-      { t: "2FA en tu nube", d: "Google/Microsoft/Dropbox/iCloud, etc." },
-      { t: "Evita subir datos sensibles sin cifrar", d: "Considera ZIP/7z con contraseña." }
-    ]
-  },
-  {
-    name: "Copias de seguridad",
-    hint: "Ransomware y pérdida de datos.",
-    items: [
-      { t: "Regla 3-2-1", d: "3 copias, 2 medios, 1 fuera de línea o nube." },
-      { t: "Prueba restauraciones", d: "Ensaya recuperar un archivo." },
-      { t: "Versionado de archivos", d: "Actívalo en tu nube si está disponible." },
-      { t: "Protege las copias con contraseña", d: "y acceso restringido." }
-    ]
-  },
-  {
-    name: "Mensajería y videollamadas",
-    hint: "Privacidad de chats y reuniones.",
-    items: [
-      { t: "E2EE cuando sea posible", d: "WhatsApp/Signal/Meet con cifrado extremo a extremo." },
-      { t: "Revisa grupos y enlaces", d: "Quita participantes desconocidos." },
-      { t: "Cuida la pantalla compartida", d: "Cierra ventanas sensibles antes de compartir." },
-      { t: "Protege enlaces de reunión", d: "Usa sala de espera o contraseña." }
-    ]
-  },
-  {
-    name: "Redes sociales",
-    hint: "Perfiles, visibilidad y suplantación.",
-    items: [
-      { t: "Privacidad del perfil", d: "Limita quién ve tus publicaciones." },
-      { t: "Revisión de etiquetado", d: "Aprueba etiquetas antes de publicar." },
-      { t: "2FA en redes", d: "Evita que secuestren tu cuenta." },
-      { t: "Cuida lo que publicas", d: "Evita datos sensibles (ubicación, documentos)." }
-    ]
-  },
-  {
-    name: "Incidentes y respuesta",
-    hint: "Qué hacer si algo sale mal.",
-    items: [
-      { t: "Reconoce señales de compromiso", d: "Computador lento, apps extrañas, alertas AV." },
-      { t: "Tienes a mano los contactos", d: "Soporte TI, banco, operador." },
-      { t: "Cambia contraseñas comprometidas", d: "Prioriza correo, banco y redes." },
-      { t: "Denuncia cuando aplique", d: "Autoridades y soporte oficial." }
-    ]
-  }
+  // ... agrega el resto de categorías y sus ítems (familia, wifi, copias, etc.)
 ];
 
-/* ===========================
-   1) Persistencia y utilidades
-   =========================== */
-
-const LS_KEY = "seguridad_delagente_checks_v1";
-const THEME_KEY = "seguridad_delagente_theme";
-
-function loadChecks(){
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
-  catch { return {}; }
-}
-function saveChecks(map){ localStorage.setItem(LS_KEY, JSON.stringify(map)); }
-
-function qs(sel,root=document){ return root.querySelector(sel); }
-function qsa(sel,root=document){ return Array.from(root.querySelectorAll(sel)); }
-
-/* ===========================
-   2) Render checklist
-   =========================== */
-
-const state = {
-  checks: loadChecks(),
-  charts: { byCat: null, dist: null }
+// ======== ESTADO ========
+let STATE = {
+  user: null,              // { id, email }
+  checks: {},              // item_key -> boolean
+  totalItems: 0
 };
 
-const listEl = qs("#lista");
-const progressTextEl = qs("#progressText");
-const progressCountEl = qs("#progressCount");
-const progressBarEl = qs("#progressBar");
-const searchEl = qs("#search");
+// ======== UI de Sesión ========
+const ui = {
+  loggedOut: document.getElementById('loggedOut'),
+  loggedIn: document.getElementById('loggedIn'),
+  whoami: document.getElementById('whoami'),
+  btnLogin: document.getElementById('btnLogin'),
+  btnRegister: document.getElementById('btnRegister'),
+  btnLogout: document.getElementById('btnLogout'),
+  email: document.getElementById('authEmail'),
+  pass: document.getElementById('authPassword')
+};
 
-function render(){
-  listEl.innerHTML = "";
-  let total = 0, done = 0;
+async function refreshSessionUI() {
+  if (STATE.user) {
+    ui.loggedOut.style.display = 'none';
+    ui.loggedIn.style.display = 'flex';
+    ui.whoami.textContent = STATE.user.email;
+  } else {
+    ui.loggedOut.style.display = 'flex';
+    ui.loggedIn.style.display = 'none';
+  }
+}
 
-  CATEGORIES.forEach(cat => {
-    const catId = cat.name;
-    const filteredItems = (cat.items || []).filter(item => matchesSearch(item));
-    total += filteredItems.length;
-    const doneCat = filteredItems.reduce((acc, item) => acc + (state.checks[itemId(catId, item.t)] ? 1 : 0), 0);
-    done += doneCat;
+ui.btnRegister.addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signUp({
+    email: ui.email.value.trim(),
+    password: ui.pass.value
+  });
+  if (error) return alert(error.message);
+  alert('Cuenta creada. Revisa tu correo si se solicita confirmación.');
+});
 
-    const catWrap = document.createElement("section");
-    catWrap.className = "category";
-    catWrap.setAttribute("aria-label", cat.name);
+ui.btnLogin.addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: ui.email.value.trim(),
+    password: ui.pass.value
+  });
+  if (error) return alert(error.message);
+  await loadUser();
+  await pullProgressFromCloud();
+  renderAll();
+  alert('Sesión iniciada.');
+});
 
-    const h2 = document.createElement("h2");
-    h2.textContent = cat.name;
-    catWrap.appendChild(h2);
+ui.btnLogout.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  STATE.user = null;
+  refreshSessionUI();
+});
 
-    const chip = document.createElement("div");
-    chip.className = "cat-progress";
-    chip.textContent = `${doneCat}/${filteredItems.length} completados`;
-    catWrap.appendChild(chip);
+// ======== SESIÓN ACTUAL ========
+async function loadUser() {
+  const { data } = await supabase.auth.getUser();
+  STATE.user = data.user ? { id: data.user.id, email: data.user.email } : null;
+  await refreshSessionUI();
+}
 
-    const hint = document.createElement("p");
-    hint.className = "hint";
-    hint.textContent = cat.hint || "";
-    catWrap.appendChild(hint);
+// ======== STORAGE LOCAL (offline) ========
+const LS_KEY = "seguridad_delagente_checks";
 
-    filteredItems.forEach(item => {
-      const id = itemId(catId, item.t);
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) STATE.checks = JSON.parse(raw);
+  } catch {}
+}
 
-      const row = document.createElement("div");
-      row.className = "item";
-      row.addEventListener("click", e => {
-        if(e.target.tagName === "A" || e.target.tagName === "INPUT") return;
-        toggleCheck(id);
-      });
+function saveToLocal() {
+  localStorage.setItem(LS_KEY, JSON.stringify(STATE.checks));
+}
 
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = !!state.checks[id];
-      cb.addEventListener("change", () => toggleCheck(id));
-      row.appendChild(cb);
+// ======== CLOUD SYNC (Supabase) ========
+async function pullProgressFromCloud() {
+  if (!STATE.user) return;
+  const { data, error } = await supabase
+    .from('progress')
+    .select('item_key, checked')
+    .eq('user_id', STATE.user.id);
 
-      const content = document.createElement("div");
-      const title = document.createElement("div");
-      title.className = "title";
-      title.textContent = item.t;
-      content.appendChild(title);
+  if (error) {
+    console.error(error);
+    return;
+  }
+  // mezcla en estado local
+  for (const row of data) STATE.checks[row.item_key] = row.checked;
+  saveToLocal();
+}
 
-      if(item.d){
-        const d = document.createElement("div");
-        d.className = "desc";
-        d.textContent = item.d;
-        content.appendChild(d);
-      }
-      if(item.link){
-        const a = document.createElement("a");
-        a.href = item.link; a.target = "_blank"; a.rel = "noopener";
-        a.textContent = "Guía";
-        content.appendChild(a);
-      }
+async function pushItemToCloud(itemKey, checked) {
+  if (!STATE.user) return; // sin sesión: solo local
+  const { error } = await supabase
+    .from('progress')
+    .upsert({
+      user_id: STATE.user.id,
+      item_key: itemKey,
+      checked: !!checked,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,item_key' });
+  if (error) console.error('upsert error', error);
+}
 
-      row.appendChild(content);
-      catWrap.appendChild(row);
+// ======== RENDER CHECKLIST ========
+const root = document.getElementById('checklistRoot');
+const progressPct = document.getElementById('progressPct');
+const progressCount = document.getElementById('progressCount');
+const progressBar = document.getElementById('progressBar');
+
+function renderChecklist() {
+  STATE.totalItems = CATEGORIES.reduce((acc, c) => acc + c.items.length, 0);
+
+  let html = '';
+  for (const cat of CATEGORIES) {
+    html += `
+      <section class="card" style="margin:14px 0;">
+        <h2>${cat.title}</h2>
+        <p>${cat.desc || ''}</p>
+        ${cat.items.map(item => {
+          const key = `${cat.id}:${item.id}`;
+          const checked = !!STATE.checks[key];
+          const helpLink = item.link ? `<a href="${item.link}" target="_blank"> ${item.help || 'Guía'}</a>` : '';
+          return `
+            <label style="display:block;padding:12px;border-bottom:1px dashed #e8e8e8;">
+              <input type="checkbox" data-key="${key}" ${checked ? 'checked' : ''} />
+              <strong> ${item.text} </strong> ${helpLink}
+            </label>
+          `;
+        }).join('')}
+      </section>
+    `;
+  }
+  root.innerHTML = html;
+
+  // eventos
+  root.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+    chk.addEventListener('change', async (e) => {
+      const key = e.target.dataset.key;
+      STATE.checks[key] = e.target.checked;
+      saveToLocal();
+      await pushItemToCloud(key, e.target.checked);
+      renderProgress();
+      renderCharts(); // actualiza barras
     });
-
-    listEl.appendChild(catWrap);
   });
 
-  // Progreso global
-  const pct = total ? Math.round((done/total)*100) : 0;
-  progressTextEl.textContent = `Progreso: ${pct}%`;
-  progressCountEl.textContent = `(${done}/${total})`;
-  progressBarEl.style.width = `${pct}%`;
-
-  // Actualiza gráficos
-  drawCharts();
+  renderProgress();
 }
 
-function matchesSearch(item){
-  const q = (searchEl.value || "").trim().toLowerCase();
-  if(!q) return true;
-  const hay = [item.t, item.d].join(" ").toLowerCase();
-  return hay.includes(q);
+function renderProgress() {
+  const done = Object.values(STATE.checks).filter(Boolean).length;
+  const pct = STATE.totalItems ? Math.round((done / STATE.totalItems) * 100) : 0;
+  progressPct.textContent = `${pct}%`;
+  progressCount.textContent = `${done}/${STATE.totalItems}`;
+  progressBar.style.width = `${pct}%`;
 }
 
-function itemId(cat, title){
-  return `${cat}::${title}`.toLowerCase().replace(/\s+/g,"_");
-}
+// ======== GRÁFICOS ========
+let chartCategory, chartDonut;
 
-function toggleCheck(id){
-  state.checks[id] = !state.checks[id];
-  saveChecks(state.checks);
-  render();
-}
-
-/* ===========================
-   3) Gráficos (Chart.js)
-   =========================== */
-
-function chartColors(){
-  const isDark = document.body.classList.contains("dark");
-  return {
-    text: getComputedStyle(document.body).getPropertyValue("--text").trim(),
-    grid: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-    palette: [
-      "#3b82f6","#f43f5e","#f59e0b","#22c55e","#06b6d4",
-      "#8b5cf6","#9ca3af","#0ea5e9","#ef4444","#14b8a6"
-    ]
-  };
-}
-
-function drawCharts(){
-  const ctx1 = qs("#chartProgressByCategory").getContext("2d");
-  const ctx2 = qs("#chartItemsDistribution").getContext("2d");
-  const colors = chartColors();
-
-  // Datos por categoría
+function buildDatasets() {
+  // Avance por categoría (% por categoría)
   const labels = [];
-  const pctData = [];
-  const countData = [];
-  CATEGORIES.forEach(cat=>{
-    const items = (cat.items||[]);
-    const total = items.length;
-    const done = items.reduce((a,it)=> a + (state.checks[itemId(cat.name,it.t)]?1:0), 0);
-    labels.push(cat.name);
-    pctData.push(total? Math.round(100*done/total):0);
-    countData.push(total);
-  });
+  const dataPct = [];
 
-  // Destruir si existen
-  if(state.charts.byCat) state.charts.byCat.destroy();
-  if(state.charts.dist) state.charts.dist.destroy();
+  for (const cat of CATEGORIES) {
+    labels.push(cat.title);
+    const total = cat.items.length;
+    const done = cat.items.filter(i => STATE.checks[`${cat.id}:${i.id}`]).length;
+    dataPct.push(total ? Math.round((done / total) * 100) : 0);
+  }
 
-  state.charts.byCat = new Chart(ctx1, {
-    type: "bar",
+  // Distribución de ítems (cantidad por categoría)
+  const itemsPerCat = CATEGORIES.map(c => c.items.length);
+
+  return { labels, dataPct, itemsPerCat };
+}
+
+function renderCharts() {
+  const { labels, dataPct, itemsPerCat } = buildDatasets();
+
+  // Barra de avance por categoría
+  const ctx1 = document.getElementById('chartCategory').getContext('2d');
+  if (chartCategory) chartCategory.destroy();
+  chartCategory = new Chart(ctx1, {
+    type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label: "% completado",
-        data: pctData,
-        backgroundColor: colors.palette.map(c => c + "dd"),
-        borderColor: colors.palette,
-        borderWidth: 1
-      }]
+      datasets: [{ label: '% completado', data: dataPct }]
     },
     options: {
-      responsive:true,
-      scales: {
-        y: {
-          beginAtZero:true,
-          max:100,
-          ticks: { color: colors.text },
-          grid: { color: colors.grid }
-        },
-        x: { ticks: { color: colors.text }, grid: { color: colors.grid } }
-      },
-      plugins:{
-        legend:{ labels:{ color: colors.text } },
-        tooltip:{ enabled:true }
-      }
+      responsive: true,
+      scales: { y: { suggestedMin: 0, suggestedMax: 100, ticks: { callback: v => v + '%' } } }
     }
   });
 
-  state.charts.dist = new Chart(ctx2, {
-    type: "doughnut",
+  // Donut distribución de ítems
+  const ctx2 = document.getElementById('chartDonut').getContext('2d');
+  if (chartDonut) chartDonut.destroy();
+  chartDonut = new Chart(ctx2, {
+    type: 'doughnut',
     data: {
       labels,
-      datasets: [{
-        data: countData,
-        backgroundColor: colors.palette,
-        borderColor: chartBorderForTheme(),
-        borderWidth: 2
-      }]
+      datasets: [{ data: itemsPerCat }]
     },
-    options: {
-      cutout: "60%",
-      plugins:{
-        legend:{
-          position:"top",
-          labels:{ color: colors.text, boxWidth:14 }
-        },
-        tooltip:{ enabled:true }
-      }
-    }
+    options: { responsive: true, cutout: '60%' }
   });
 }
 
-function chartBorderForTheme(){
-  const isDark = document.body.classList.contains("dark");
-  return isDark ? "#0f1115" : "#ffffff";
-}
-
-/* ===========================
-   4) Tema claro/oscuro
-   =========================== */
-
-function applyTheme(theme){
-  const isDark = theme === "dark";
-  document.body.classList.toggle("dark", isDark);
-  const btn = qs("#btnTheme");
-  btn.textContent = isDark ? "☀️ Tema claro" : "🌙 Tema oscuro";
-  // Redibujar gráficos con la nueva paleta
-  if(state.charts.byCat || state.charts.dist) drawCharts();
-}
-
-function loadTheme(){
-  const saved = localStorage.getItem(THEME_KEY);
-  if(saved){ applyTheme(saved); return; }
-  // Si no hay preferencia, detecta media query
-  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  applyTheme(prefersDark ? "dark" : "light");
-}
-
-qs("#btnTheme").addEventListener("click", ()=>{
-  const now = document.body.classList.contains("dark") ? "light" : "dark";
-  localStorage.setItem(THEME_KEY, now);
-  applyTheme(now);
+// ======== BÚSQUEDA (simple) ========
+document.getElementById('search').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  // ocultar/mostrar secciones según items que matcheen
+  root.querySelectorAll('section.card').forEach(sec => {
+    const txt = sec.innerText.toLowerCase();
+    sec.style.display = txt.includes(q) ? '' : 'none';
+  });
 });
 
-/* ===========================
-   5) Búsqueda + inicio
-   =========================== */
-searchEl.addEventListener("input", ()=>{
-  render();
-});
+// ======== INICIO ========
+(async function init() {
+  loadFromLocal();
+  await loadUser();
+  if (STATE.user) await pullProgressFromCloud();
+  renderChecklist();
+  renderCharts();
+  refreshSessionUI();
 
-// Carga inicial
-loadTheme();
-render();
+  // Escucha cambios de sesión (si cambias de cuenta)
+  supabase.auth.onAuthStateChange(async (_event, session) => {
+    STATE.user = session?.user ? { id: session.user.id, email: session.user.email } : null;
+    await refreshSessionUI();
+    if (STATE.user) {
+      await pullProgressFromCloud();
+    }
+    renderChecklist();
+    renderCharts();
+  });
+})();

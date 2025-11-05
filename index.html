@@ -4,98 +4,93 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Seguridad DeLaGente</title>
-  <link rel="icon" href="favicon.ico" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="img/logo-comfenalco.jpg" />
+
+  <!-- Estilos base (tus estilos existentes) -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    :root{
-      --bg:#ffffff; --card:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
-      --brand:#111111; --accent:#0ea5e9; --progress:#16a34a;
+    /* Un poco de estilo para la barra de sesión */
+    .session-bar{
+      display:flex; gap:12px; align-items:center; justify-content:flex-end;
+      padding:8px 12px; background:#f6f7f9; border-radius:12px; margin:10px 0;
     }
-    body.dark{
-      --bg:#0f1115; --card:#12161c; --text:#e5e7eb; --muted:#9aa3b2; --border:#202532;
-      --brand:#111111; --accent:#38bdf8; --progress:#22c55e;
-    }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans";line-height:1.45}
-    header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10}
-    header img{height:34px}
-    header h1{font-size:20px;margin:0;font-weight:700}
-    .spacer{flex:1}
-    .btn{background:#111;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer}
-    body.dark .btn{background:#fff;color:#111}
-    .ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
-    main{max-width:1050px;margin:24px auto;padding:0 16px}
-    .sub{color:var(--muted);margin-top:4px}
-    .toolbar{display:flex;gap:10px;margin:16px 0 10px;flex-wrap:wrap;align-items:center}
-    .search{width:min(820px,100%);padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text)}
-    .progress-wrap{margin:8px 0 18px}
-    .progress-top{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);margin-bottom:8px}
-    .bar{height:10px;background:var(--border);border-radius:999px;overflow:hidden}
-    .bar>div{height:100%;width:0%;background:linear-gradient(90deg,var(--progress),#4ade80);transition:width .3s ease}
-    .charts{display:grid;grid-template-columns:1fr;gap:14px;margin:18px 0 24px}
-    @media (min-width:900px){.charts{grid-template-columns:1fr 1fr}}
-    .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
-    .chart-card h3{margin:0 0 10px 0;font-size:18px}
-    .category{background:var(--card);border:1px solid var(--border);border-radius:14px;margin:18px 0;padding:10px 0 6px}
-    .category h2{font-size:24px;margin:10px 14px 2px}
-    .category .hint{color:var(--muted);margin:0 14px 8px}
-    .cat-progress{display:inline-block;margin:0 14px 8px;font-size:14px;color:#fff;background:var(--brand);padding:6px 10px;border-radius:999px}
-    .item{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;border-top:1px dashed var(--border);padding:14px;cursor:pointer}
-    .item:hover{background:rgba(17,17,17,.06)}
-    body.dark .item:hover{background:rgba(255,255,255,.06)}
-    .item input{margin-top:5px;width:20px;height:20px}
-    .item .title{font-weight:600}
-    .item .desc{color:var(--muted);margin-top:4px}
-    .item a{color:var(--accent);text-decoration:none;font-weight:600}
-    footer{color:var(--muted);font-size:12px;text-align:center;margin:28px 0 60px}
+    .session-bar input{ padding:8px 10px; border:1px solid #ccc; border-radius:8px; }
+    .session-bar button{ padding:8px 12px; border:0; border-radius:8px; background:#0d6efd; color:#fff; cursor:pointer; }
+    .session-bar small{ color:#666; }
+    .pill{ background:#eef2ff; color:#2b2d42; padding:6px 10px; border-radius:999px; }
+    .container{ max-width:1200px; margin:0 auto; padding:16px; }
+    .cards{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .card{ background:#fff; border:1px solid #e8e8e8; border-radius:14px; padding:16px; min-height:240px; }
+    @media (max-width:900px){ .cards{ grid-template-columns:1fr; } }
   </style>
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <header>
-    <!-- usa .jpg sin espacios -->
-    <img src="img/logo-comfenalco.jpg" alt="Comfenalco Valle">
-    <h1>Seguridad DeLaGente</h1>
-    <div class="spacer"></div>
-    <button id="btnTheme" class="btn ghost" aria-label="Cambiar tema">🌙 Tema oscuro</button>
-    <a href="#lista" class="btn">Ir al checklist</a>
-  </header>
 
-  <main>
-    <p class="sub">Lista de verificación práctica de seguridad digital.</p>
+  <div class="container">
+    <header style="display:flex;align-items:center;gap:16px;">
+      <img src="img/logo-comfenalco.jpg" alt="Comfenalco Valle" style="height:40px;border-radius:6px;">
+      <h1 style="margin:0;">Seguridad DeLaGente</h1>
+      <div style="flex:1"></div>
 
-    <div class="toolbar">
-      <input id="search" class="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)…" />
-    </div>
-
-    <div class="progress-wrap">
-      <div class="progress-top">
-        <div><strong id="progressText">Progreso: 0%</strong> <span id="progressCount" class="sub">(0/0)</span></div>
-        <div class="sub">Tus avances se guardan <strong>solo en este navegador</strong>.</div>
+      <!-- Barra de sesión -->
+      <div class="session-bar" id="sessionBar">
+        <div id="loggedOut">
+          <input type="email" id="authEmail" placeholder="Correo" />
+          <input type="password" id="authPassword" placeholder="Contraseña" />
+          <button id="btnLogin">Iniciar sesión</button>
+          <button id="btnRegister" style="background:#198754;">Crear cuenta</button>
+          <small>Los avances se sincronizan por usuario</small>
+        </div>
+        <div id="loggedIn" style="display:none;">
+          <span id="whoami" class="pill">Sesión</span>
+          <button id="btnLogout" style="background:#dc3545;">Salir</button>
+        </div>
       </div>
-      <div class="bar"><div id="progressBar"></div></div>
-    </div>
+    </header>
 
-    <!-- GRÁFICOS -->
-    <section class="charts" aria-label="Indicadores">
-      <div class="chart-card">
-        <h3>Avance por categoría</h3>
-        <canvas id="chartProgressByCategory" height="140"></canvas>
-      </div>
-      <div class="chart-card">
-        <h3>Distribución de ítems</h3>
-        <canvas id="chartItemsDistribution" height="140"></canvas>
+    <!-- Buscador + Progreso (igual que tenías) -->
+    <section>
+      <input id="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)..." style="width:100%;padding:12px 14px;border:1px solid #e2e2e2;border-radius:12px;">
+      <p><strong>Progreso:</strong> <span id="progressPct">0%</span> (<span id="progressCount">0/0</span>)</p>
+      <div style="height:8px;background:#eee;border-radius:999px;">
+        <div id="progressBar" style="height:8px;background:#0d6efd;width:0%;border-radius:999px;"></div>
       </div>
     </section>
 
-    <!-- CHECKLIST -->
-    <div id="lista"></div>
+    <!-- Gráficos -->
+    <section class="cards" style="margin:18px 0;">
+      <div class="card">
+        <h3>Avance por categoría</h3>
+        <canvas id="chartCategory"></canvas>
+      </div>
+      <div class="card">
+        <h3>Distribución de ítems</h3>
+        <canvas id="chartDonut"></canvas>
+      </div>
+    </section>
 
-    <footer>© Comfenalco Valle delagente — Seguridad DeLaGente</footer>
-  </main>
+    <!-- Checklist (tu HTML dinámico lo genera script.js) -->
+    <main id="checklistRoot" style="margin:18px 0;"></main>
 
+    <footer style="text-align:center;color:#777;margin:24px 0;">
+      © Comfenalco Valle delagente — Seguridad DeLaGente
+    </footer>
+  </div>
+
+  <!-- Configuración Supabase (pon aquí tus claves) -->
+  <script>
+    window.SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";
+  </script>
+
+  <!-- Tu lógica -->
   <script src="script.js"></script>
 </body>
 </html>
