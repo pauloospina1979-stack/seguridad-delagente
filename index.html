@@ -1,145 +1,128 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Seguridad Delagente</title>
-  <link rel="icon" href="img/logo-comfenalco.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{
-      --bg:#ffffff;--fg:#111111;--muted:#666;--card:#f6f7f9;--border:#e7e7ea;
-      --accent:#0f766e;--pill:#111;--pillfg:#fff;
+    :root {
+      --brand:#0b132b; --bg:#ffffff; --fg:#101114; --muted:#6b7280; --card:#f7f7f9; --border:#e5e7eb;
     }
-    .dark{
-      --bg:#0b0d10;--fg:#e8e8ea;--muted:#a9a9b2;--card:#12151a;--border:#1e232b;
-      --accent:#22d3ee;--pill:#e8e8ea;--pillfg:#0b0d10;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto; background:var(--bg); color:var(--fg)}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{height:34px;width:auto;border-radius:6px}
-    .title{font-weight:800;font-size:22px}
-    .controls{display:flex;gap:10px;align-items:center}
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);cursor:pointer;font-weight:600}
-    .btn-outline{background:transparent;color:var(--fg)}
-    .chip{padding:7px 10px;border-radius:999px;background:var(--pill);color:var(--pillfg);border:1px solid var(--pill)}
-    main{max-width:1200px;margin:0 auto;padding:20px}
-    .search{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--fg)}
-    .muted{color:var(--muted)}
-    .bar{height:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;overflow:hidden}
-    .bar > span{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#0ea5e9);width:0%}
-    .grid2{display:grid;grid-template-columns:1fr;gap:16px;margin-top:14px}
-    @media(min-width:920px){.grid2{grid-template-columns:1fr 1fr}}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
-    h2,h3{margin:0 0 12px 0}
-    /* Checklist */
-    .section{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-top:18px}
-    .section .hd{padding:16px;border-bottom:1px solid var(--border)}
-    .section .bd{padding:8px 12px}
-    .item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-bottom:1px dashed var(--border)}
-    .item:last-child{border-bottom:none}
-    .item input{transform:translateY(2px)}
-    .hint a{color:var(--accent);text-decoration:none}
-    footer{padding:20px 12px;color:var(--muted);text-align:center}
+    .dark { --bg:#0b0f14; --fg:#e8eef5; --muted:#94a3b8; --card:#0f141b; --border:#1f2937; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:var(--bg); color:var(--fg); }
+    header { display:flex; align-items:center; gap:16px; padding:16px 20px; border-bottom:1px solid var(--border); }
+    header img.logo { height:34px; object-fit:contain; }
+    header h1 { font-size:1.4rem; margin:0; font-weight:700; }
+    .spacer { flex:1; }
+    .btn { border:1px solid var(--border); background:#111827; color:#fff; padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:600; }
+    .btn.secondary { background:transparent; color:var(--fg); }
+    main { padding:24px; max-width:1200px; margin:0 auto; }
+    .lead { color:var(--muted); margin:4px 0 18px; }
+    .search { width:100%; border:1px solid var(--border); border-radius:10px; padding:14px 16px; color:var(--fg); background:var(--card); }
+    .progress-track { height:8px; background:var(--card); border-radius:999px; overflow:hidden; }
+    .progress-bar { height:100%; background:#10b981; width:0%; transition:width .3s; }
+    .grid { display:grid; gap:20px; grid-template-columns:1fr 1fr; margin:22px 0; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+    .card h3 { margin:0 0 12px; font-size:1.1rem; }
+    .chart-wrap { height:340px; }
+    .categories { display:flex; flex-direction:column; gap:14px; }
+    .cat { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:12px; cursor:pointer; text-decoration:none; color:inherit; }
+    .cat:hover { outline:2px solid #d1d5db44; }
+    .cat img { width:28px; height:28px; object-fit:contain; }
+    .cat .name { font-weight:600; }
+    .pill { font-size:.9rem; color:var(--muted); }
+    .bar { flex:1; height:8px; background:#e5e7eb22; border-radius:999px; overflow:hidden; }
+    .bar > span { display:block; height:100%; background:#3b82f6; width:0%; transition:width .3s; }
+    section { margin:28px 0 12px; }
+    section h2 { font-size:1.4rem; margin:0 0 8px; }
+    .item { display:flex; align-items:flex-start; gap:12px; padding:14px 10px; border-bottom:1px dashed var(--border); }
+    .item:last-child { border-bottom:none; }
+    .item input { margin-top:3px; }
+    .item-title { font-weight:700; }
+    .muted { color:var(--muted); }
+    footer { text-align:center; padding:24px; color:var(--muted); }
     /* Modal Auth */
-    .modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:1000}
-    .modal-content{background:var(--bg);color:var(--fg);max-width:420px;width:92%;padding:20px;border-radius:12px;border:1px solid var(--border)}
-    .modal-close{float:right;cursor:pointer;font-size:22px}
-    .tabs{display:flex;gap:8px;margin:10px 0 16px}
-    .tab{padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer}
-    .tab.active{background:var(--fg);color:var(--bg);border-color:var(--fg)}
-    .tab-panel{display:none}.tab-panel.active{display:block}
-    .auth-area{display:flex;gap:10px;align-items:center}
-    input[type=email], input[type=password]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--fg);margin-bottom:10px}
-    .charts canvas{width:100%;height:320px}
+    dialog { border:none; border-radius:16px; width:min(420px, 96vw); background:var(--bg); color:var(--fg); padding:0; }
+    .modal { padding:18px; }
+    .modal h3 { margin:0 0 12px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin:10px 0; }
+    .input { border:1px solid var(--border); background:var(--card); color:var(--fg); padding:10px 12px; border-radius:10px; }
+    .login-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:10px; }
+    @media (max-width: 900px) { .grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
-      <!-- Asegúrate de que exista exactamente en img/logo-comfenalco.jpg -->
-      <img src="img/logo-comfenalco.jpg" alt="Comfenalco Valle">
-      <div class="title">Seguridad DeLaGente</div>
-    </div>
-    <div class="controls">
-      <button id="btnDark" class="btn btn-outline">🌙 Tema oscuro</button>
-      <a class="btn" href="#checklist">Ir al checklist</a>
-      <div id="authArea" class="auth-area">
-        <button id="btnOpenAuth" class="btn btn-outline">Iniciar sesión / Crear cuenta</button>
-        <div id="userBox" style="display:none">
-          <span id="userEmail" class="chip"></span>
-          <button id="btnLogout" class="btn btn-outline">Salir</button>
-        </div>
-      </div>
-    </div>
+    <img src="img/logo-comfenalco.jpg" alt="Comfenalco Valle" class="logo" onerror="this.replaceWith(document.createTextNode('🛡️'))">
+    <h1>Seguridad Delagente</h1>
+    <div class="spacer"></div>
+    <button id="btn-theme" class="btn secondary">Tema oscuro</button>
+    <button id="btn-checklist" class="btn">Ir al checklist</button>
+    <button id="btn-auth" class="btn secondary">Iniciar sesión</button>
   </header>
 
   <main>
-    <h1 class="muted" style="font-size:18px;margin:4px 0 16px">Lista de verificación práctica de seguridad digital.</h1>
+    <p class="lead">Lista de verificación práctica de seguridad digital.</p>
 
-    <input id="search" class="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)…">
+    <input id="search" class="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)…"/>
 
-    <div style="margin:12px 0 4px" class="muted">
-      <b>Progreso: <span id="pLabel">0%</span> (<span id="pCount">0/0</span>)</b> — Tus avances se guardan <b>solo en este navegador</b> y, si inicias sesión, también en tu cuenta.
+    <div style="display:flex; align-items:center; gap:10px; margin:14px 0 6px;">
+      <div><strong>Progreso:</strong> <span id="progress-text">0% (0/0)</span></div>
+      <div class="spacer"></div>
+      <div class="pill">Tus avances se guardan en tu cuenta.</div>
     </div>
-    <div class="bar"><span id="pBar"></span></div>
+    <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
 
-    <!-- GRÁFICOS -->
-    <div class="grid2 charts">
+    <!-- GRAFICOS -->
+    <div class="grid">
       <div class="card">
         <h3>Avance por categoría</h3>
-        <canvas id="barCat"></canvas>
+        <div class="chart-wrap"><canvas id="chartBars"></canvas></div>
       </div>
       <div class="card">
         <h3>Distribución de ítems</h3>
-        <canvas id="pieDist"></canvas>
+        <div class="chart-wrap"><canvas id="chartRadar"></canvas></div>
       </div>
+    </div>
+
+    <!-- NAVEGACIÓN POR CATEGORÍA -->
+    <div class="card">
+      <h3>Categorías</h3>
+      <div id="categoryNav" class="categories"></div>
     </div>
 
     <!-- CHECKLIST -->
+    <section id="checklistTop"><h2>Checklist</h2></section>
     <div id="checklist"></div>
+
+    <footer>© Comfenalco Valle delagente — Seguridad Delagente</footer>
   </main>
 
-  <footer>
-    © Comfenalco Valle delagente — Seguridad Delagente
-  </footer>
-
-  <!-- Modal de Autenticación -->
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <span id="authClose" class="modal-close">&times;</span>
-      <h3>Accede a tu cuenta</h3>
-      <div class="tabs">
-        <button class="tab active" data-tab="login">Iniciar sesión</button>
-        <button class="tab" data-tab="signup">Crear cuenta</button>
+  <!-- MODAL AUTH -->
+  <dialog id="authModal">
+    <form method="dialog" class="modal" id="authForm">
+      <h3>Acceder</h3>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" class="input" required>
       </div>
-
-      <div id="tab-login" class="tab-panel active">
-        <form id="loginForm">
-          <input id="loginEmail" type="email" placeholder="Correo" required>
-          <input id="loginPass" type="password" placeholder="Contraseña" required>
-          <button type="submit" class="btn" style="width:100%">Entrar</button>
-        </form>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="password" class="input" required>
       </div>
-
-      <div id="tab-signup" class="tab-panel">
-        <form id="signupForm">
-          <input id="signupEmail" type="email" placeholder="Correo" required>
-          <input id="signupPass" type="password" placeholder="Contraseña (mín. 6)" minlength="6" required>
-          <button type="submit" class="btn" style="width:100%">Crear cuenta</button>
-        </form>
-        <p class="muted" style="margin:6px 0 0">Te enviaremos un correo de verificación.</p>
+      <div class="login-actions">
+        <button id="btn-register" class="btn secondary" type="button">Crear cuenta</button>
+        <button id="btn-login" class="btn" type="button">Iniciar sesión</button>
       </div>
-    </div>
-  </div>
+      <p id="authMsg" class="muted" style="margin-top:8px;"></p>
+    </form>
+  </dialog>
 
-  <!-- Librerías -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <!-- Tu script -->
-  <script src="script.js"></script>
+  <script src="script.supabase.js"></script>
 </body>
 </html>
