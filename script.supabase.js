@@ -1,167 +1,237 @@
-/*******************************************************
- *  SEGURIDAD DELAGENTE - script.supabase.js
- *  Integración con Supabase (Dashboard y Checklist)
- *******************************************************/
+/*************************************************
+ *  CONFIGURACIÓN SUPABASE
+ *************************************************/
+// 1) Rellena con TU URL y TU ANON KEY
+const SUPABASE_URL  = "https://piqobvnfkglhwkhqzvpe.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";
 
-/**********************
- * 1. CONFIGURACIÓN
- **********************/
-const SB_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";     // ⚠️ Reemplaza con tu URL real
-const SB_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";                   // ⚠️ Reemplaza con tu anon key
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// Cliente Supabase
-const supabaseClient = window.supabase.createClient(SB_URL, SB_ANON_KEY);
+/*************************************************
+ *  UTILIDADES UI
+ *************************************************/
+const $ = (id) => document.getElementById(id);
 
-/**********************
- * 2. SESIÓN DE USUARIO
- **********************/
-async function currentUserIdOrNull() {
-  try {
-    const { data } = await supabaseClient.auth.getUser();
-    return data?.user?.id ?? null;
-  } catch (error) {
-    console.warn("⚠️ No hay sesión activa:", error.message);
-    return null;
-  }
-}
+function log(...a){ console.log("[app]", ...a); }
+function warn(...a){ console.warn("[app]", ...a); }
+function err(...a){ console.error("[app]", ...a); }
 
-/**********************
- * 3. FUNCIONES RPC
- **********************/
-async function fetchCategoryProgress() {
-  const uid = await currentUserIdOrNull();
-  console.info("📊 Consultando progreso por categoría...");
-  const { data, error } = await supabaseClient.rpc("rpc_category_progress", { p_user: uid });
-  
-  if (error) {
-    console.error("❌ Error en rpc_category_progress:", error);
-    return [];
-  }
+/*************************************************
+ *  CHARTS (Chart.js)
+ *************************************************/
+let barChart, radarChart;
 
-  return data.map(r => ({
-    slug: r.category_slug,
-    name: r.category_name,
-    total: r.total_items,
-    done: r.completed
-  }));
-}
+// Paletas por si quieres darle color a cada categoría
+const chartColors = [
+  "#60a5fa", "#f472b6", "#fbbf24", "#34d399", "#a78bfa",
+  "#22d3ee", "#f87171", "#4ade80", "#c084fc", "#38bdf8"
+];
 
-async function fetchGlobalProgress() {
-  const uid = await currentUserIdOrNull();
-  console.info("📈 Consultando progreso global...");
-  const { data, error } = await supabaseClient.rpc("rpc_global_progress", { p_user: uid });
+// Dibuja / actualiza barras horizontales
+function renderBarChart(labels, values) {
+  const ctx = $("barChart").getContext("2d");
+  if (barChart) barChart.destroy();
 
-  if (error) {
-    console.error("❌ Error en rpc_global_progress:", error);
-    return { total: 0, done: 0 };
-  }
-
-  const row = data?.[0] || { total_items: 0, completed: 0 };
-  return { total: row.total_items, done: row.completed };
-}
-
-/**********************
- * 4. FUNCIONES DE UI
- **********************/
-function drawCategoryBars(categories) {
-  const container = document.querySelector("#tabDashboard");
-  if (!container) return;
-
-  const canvasId = "chart-categories";
-  let canvas = document.getElementById(canvasId);
-  if (!canvas) {
-    canvas = document.createElement("canvas");
-    canvas.id = canvasId;
-    container.appendChild(canvas);
-  }
-
-  const labels = categories.map(c => c.name);
-  const data = categories.map(c => (c.total ? (c.done / c.total) * 100 : 0));
-
-  new Chart(canvas, {
+  barChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels,
       datasets: [{
-        label: "% Completado",
-        data,
+        label: "Avance",
+        data: values,
         borderWidth: 1,
-        backgroundColor: "rgba(54, 162, 235, 0.6)"
+        backgroundColor: labels.map((_, i) => chartColors[i % chartColors.length])
       }]
     },
     options: {
-      indexAxis: 'y',
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      onClick: (evt, elements) => {
+        if (!elements?.length) return;
+        const idx = elements[0].index;
+        const slug = (labels[idx] || "").toLowerCase()
+          .normalize("NFD").replace(/\p{Diacritic}/gu,"")
+          .replace(/\s+/g,"-");
+        // Navega a checklist (o a secciones particulares si tienes anclas)
+        location.hash = "#checklist";
+        showTab("tabChecklist");
+        // Aquí podrías hacer scroll a la categoría: scrollToCategory(slug);
+      },
       scales: {
-        x: { beginAtZero: true, max: 100 }
+        x: { min: 0, max: 100, ticks: { stepSize: 20 } }
       },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.raw}%` } }
       }
     }
   });
 }
 
-function drawRadar(categories) {
-  const container = document.querySelector("#tabDashboard");
-  if (!container) return;
+// Dibuja / actualiza radar
+function renderRadarChart(labels, values) {
+  const ctx = $("radarChart").getContext("2d");
+  if (radarChart) radarChart.destroy();
 
-  const canvasId = "chart-radar";
-  let canvas = document.getElementById(canvasId);
-  if (!canvas) {
-    canvas = document.createElement("canvas");
-    canvas.id = canvasId;
-    container.appendChild(canvas);
-  }
-
-  const labels = categories.map(c => c.name);
-  const data = categories.map(c => (c.total ? (c.done / c.total) * 100 : 0));
-
-  new Chart(canvas, {
+  radarChart = new Chart(ctx, {
     type: "radar",
     data: {
       labels,
       datasets: [{
         label: "Avance",
-        data,
-        borderColor: "#4BC0C0",
-        backgroundColor: "rgba(75,192,192,0.2)"
+        data: values,
+        borderColor: "rgba(34,197,94,.9)",
+        backgroundColor: "rgba(34,197,94,.2)",
+        pointBackgroundColor: "rgba(34,197,94,1)",
+        pointBorderWidth: 1
       }]
     },
     options: {
-      scales: { r: { beginAtZero: true, max: 100 } }
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          suggestedMin: 0, suggestedMax: 100,
+          ticks: { stepSize: 25, showLabelBackdrop: false }
+        }
+      },
+      plugins: { legend: { display: false } }
     }
   });
 }
 
-function updateGlobalProgress(global) {
-  const progressText = document.querySelector("#progressGlobal");
-  if (progressText) {
-    const percent = global.total ? Math.round((global.done / global.total) * 100) : 0;
-    progressText.textContent = `Progreso global: ${percent}% (${global.done}/${global.total})`;
+/*************************************************
+ *  DATOS (RPC a Supabase)
+ *  Necesita:
+ *   - rpc_category_progress(uid uuid)
+ *   - rpc_global_progress(uid uuid)
+ *  con políticas RLS que permitan seleccionar.
+ *************************************************/
+async function getSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return session;
+}
+
+async function fetchCategoryProgress(uid) {
+  // Cambia "uid" por el nombre exacto del parámetro en tu RPC si difiere
+  const { data, error } = await supabase.rpc("rpc_category_progress", { uid });
+  if (error) throw error;
+  return data || [];
+}
+
+async function fetchGlobalProgress(uid) {
+  const { data, error } = await supabase.rpc("rpc_global_progress", { uid });
+  if (error) throw error;
+  // data esperado: { global_progress: 72 } o similar
+  return data;
+}
+
+/*************************************************
+ *  CARGA DEL DASHBOARD
+ *************************************************/
+async function cargarDashboard() {
+  log("Cargando Dashboard...");
+
+  // sesión (puede ser null si aún no inicia sesión)
+  const session = await getSession();
+  const uid = session?.user?.id ?? null;
+
+  // 1) Avance por categoría
+  log("Consultando progreso por categoría...");
+  let categories = [];
+  try {
+    categories = await fetchCategoryProgress(uid);
+  } catch (e) {
+    err("Error progreso por categoría:", e);
+  }
+
+  // Normaliza para gráficos
+  const labels = categories.map(c => c.category_name ?? c.category ?? "Categoría");
+  const values = categories.map(c => Number(c.progress ?? 0));
+
+  renderBarChart(labels, values);
+  renderRadarChart(labels, values);
+
+  // 2) Progreso global
+  log("Consultando progreso global...");
+  try {
+    const g = await fetchGlobalProgress(uid);
+    const pct = Math.round(Number(g?.global_progress ?? 0));
+    $("globalText").textContent = `Progreso total: ${pct}%`;
+  } catch (e) {
+    err("Error progreso global:", e);
+    $("globalText").textContent = "No se pudo obtener el progreso.";
   }
 }
 
-/**********************
- * 5. INICIALIZACIÓN
- **********************/
-async function initDashboard() {
-  console.info("🚀 Cargando Dashboard...");
+/*************************************************
+ *  TABS + AUTH (listeners)
+ *************************************************/
+function showTab(name) {
+  const tabs = ["tabDashboard", "tabChecklist", "tabAdmin"];
+  tabs.forEach(t => {
+    const n = $(t);
+    if (!n) return;
+    n.style.display = t === name ? "block" : "none";
+  });
 
-  const [cats, global] = await Promise.all([
-    fetchCategoryProgress(),
-    fetchGlobalProgress()
-  ]);
+  // estado visual de botones
+  [["btnDashboard","tabDashboard"],["btnChecklist","tabChecklist"]]
+    .forEach(([btnId, tabId]) => {
+      const b = $(btnId);
+      if (!b) return;
+      if (tabId === name) b.classList.add("active");
+      else b.classList.remove("active");
+    });
 
-  if (cats.length > 0) {
-    drawCategoryBars(cats);
-    drawRadar(cats);
-  } else {
-    console.warn("⚠️ No hay categorías registradas.");
-  }
-
-  updateGlobalProgress(global);
+  // hash amigable
+  if (name === "tabChecklist") location.hash = "#checklist";
+  else history.replaceState(null, "", location.pathname);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  initDashboard().catch(err => console.error("Error inicializando:", err));
+async function updateUI(session) {
+  if ($("btnLogin"))  $("btnLogin").style.display  = session ? "none" : "inline-block";
+  if ($("btnLogout")) $("btnLogout").style.display = session ? "inline-block" : "none";
+  // Cargar siempre dashboard (si tus vistas son públicas funciona sin login)
+  try { await cargarDashboard(); } catch(e){ warn(e); }
+}
+
+function wireEvents() {
+  $("btnDashboard")?.addEventListener("click", (e)=>{ e.preventDefault(); showTab("tabDashboard"); });
+  $("btnChecklist")?.addEventListener("click", (e)=>{ e.preventDefault(); showTab("tabChecklist"); });
+
+  $("btnLogin")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.href }
+      });
+    } catch (e) { err("Login error:", e); alert("No fue posible iniciar sesión."); }
+  });
+
+  $("btnLogout")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    await supabase.auth.signOut();
+  });
+
+  // pestaña por hash
+  if (location.hash === "#checklist") showTab("tabChecklist");
+  else showTab("tabDashboard");
+}
+
+/*************************************************
+ *  ARRANQUE
+ *************************************************/
+document.addEventListener("DOMContentLoaded", async () => {
+  wireEvents();
+
+  const { data: { session } } = await supabase.auth.getSession();
+  await updateUI(session);
+
+  supabase.auth.onAuthStateChange((_evt, sess) => {
+    updateUI(sess);
+  });
 });
