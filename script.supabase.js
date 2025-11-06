@@ -1,263 +1,167 @@
-// =============================================================
-// 🔹 CONFIGURACIÓN SUPABASE (reemplaza con tus datos)
-// =============================================================
-const SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co"; // <-- reemplaza
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";           // <-- reemplaza
+/*******************************************************
+ *  SEGURIDAD DELAGENTE - script.supabase.js
+ *  Integración con Supabase (Dashboard y Checklist)
+ *******************************************************/
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/**********************
+ * 1. CONFIGURACIÓN
+ **********************/
+const SB_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";     // ⚠️ Reemplaza con tu URL real
+const SB_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";                   // ⚠️ Reemplaza con tu anon key
 
-// =============================================================
-// 🔹 UTILIDADES UI
-// =============================================================
-const $ = (sel) => document.querySelector(sel);
-function show(el){ el?.classList?.remove('hidden'); }
-function hide(el){ el?.classList?.add('hidden'); }
-function setText(el, txt){ if(el) el.textContent = txt; }
+// Cliente Supabase
+const supabaseClient = window.supabase.createClient(SB_URL, SB_ANON_KEY);
 
-// =============================================================
-// 🔹 AUTENTICACIÓN: helpers
-// =============================================================
-async function signInWithEmail(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data.user;
-}
-async function signUpWithEmail(email, password) {
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) throw error;
-  return data.user;
-}
-async function signOut() {
-  await supabase.auth.signOut();
-  updateAuthUI(null);
-  // borro gráficos y progreso
-  if (window._barChart) window._barChart.destroy();
-  if (window._radarChart) window._radarChart.destroy();
-  setText($('#globalProgressText'), '—');
-}
-
-async function sendResetPassword(email){
-  const redirectTo = location.origin + location.pathname; // vuelve al sitio
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-  if(error) throw error;
-  return data;
-}
-
-// =============================================================
-// 🔹 OBTENER PROGRESO
-// =============================================================
-async function fetchProgress() {
+/**********************
+ * 2. SESIÓN DE USUARIO
+ **********************/
+async function currentUserIdOrNull() {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase.rpc("get_category_progress", { p_user_id: user.id });
-    if (error) throw error;
-
-    renderDashboard(data || []);
-  } catch (err) {
-    console.error("Error al obtener progreso:", err);
+    const { data } = await supabaseClient.auth.getUser();
+    return data?.user?.id ?? null;
+  } catch (error) {
+    console.warn("⚠️ No hay sesión activa:", error.message);
+    return null;
   }
 }
 
-// =============================================================
-// 🔹 RENDER: DASHBOARD (barras horizontales + radar)
-// =============================================================
-async function renderDashboard(categories) {
-  try {
-    const cats = Array.isArray(categories) ? categories : [];
-    const labels = cats.map(c => c.name ?? "Sin nombre");
-    const essential = cats.map(c => Number(c.completed_essential ?? 0));
-    const optional  = cats.map(c => Number(c.completed_optional ?? 0));
-    const advanced  = cats.map(c => Number(c.completed_advanced ?? 0));
-    const percent   = cats.map(c => Number(c.percent ?? 0));
+/**********************
+ * 3. FUNCIONES RPC
+ **********************/
+async function fetchCategoryProgress() {
+  const uid = await currentUserIdOrNull();
+  console.info("📊 Consultando progreso por categoría...");
+  const { data, error } = await supabaseClient.rpc("rpc_category_progress", { p_user: uid });
+  
+  if (error) {
+    console.error("❌ Error en rpc_category_progress:", error);
+    return [];
+  }
 
-    // --- Barras horizontales ---
-    const ctxBar = $("#chartByCategory")?.getContext?.("2d");
-    if (ctxBar){
-      if (window._barChart) window._barChart.destroy();
+  return data.map(r => ({
+    slug: r.category_slug,
+    name: r.category_name,
+    total: r.total_items,
+    done: r.completed
+  }));
+}
 
-      window._barChart = new Chart(ctxBar, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            { label: "Esencial", data: essential, backgroundColor: "#16a34a" },
-            { label: "Opcional", data: optional, backgroundColor: "#f59e0b" },
-            { label: "Avanzado", data: advanced, backgroundColor: "#ef4444" },
-          ],
-        },
-        options: {
-          indexAxis: "y",
-          responsive: true,
-          plugins: { legend: { position: "bottom" } },
-          onClick: (evt, elements) => {
-            if (!elements || !elements.length) return;
-            const idx = elements[0].index;
-            const cat = cats[idx];
-            const slug = cat?.slug ?? cat?.name?.toLowerCase().replace(/\s+/g, "-") ?? "categoria";
-            location.hash = `#cat-${slug}`;
-          },
-        },
-      });
+async function fetchGlobalProgress() {
+  const uid = await currentUserIdOrNull();
+  console.info("📈 Consultando progreso global...");
+  const { data, error } = await supabaseClient.rpc("rpc_global_progress", { p_user: uid });
+
+  if (error) {
+    console.error("❌ Error en rpc_global_progress:", error);
+    return { total: 0, done: 0 };
+  }
+
+  const row = data?.[0] || { total_items: 0, completed: 0 };
+  return { total: row.total_items, done: row.completed };
+}
+
+/**********************
+ * 4. FUNCIONES DE UI
+ **********************/
+function drawCategoryBars(categories) {
+  const container = document.querySelector("#tabDashboard");
+  if (!container) return;
+
+  const canvasId = "chart-categories";
+  let canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    canvas = document.createElement("canvas");
+    canvas.id = canvasId;
+    container.appendChild(canvas);
+  }
+
+  const labels = categories.map(c => c.name);
+  const data = categories.map(c => (c.total ? (c.done / c.total) * 100 : 0));
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "% Completado",
+        data,
+        borderWidth: 1,
+        backgroundColor: "rgba(54, 162, 235, 0.6)"
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: {
+        x: { beginAtZero: true, max: 100 }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     }
+  });
+}
 
-    // --- Radar ---
-    const ctxRadar = $("#chartRadar")?.getContext?.("2d");
-    if (ctxRadar){
-      if (window._radarChart) window._radarChart.destroy();
+function drawRadar(categories) {
+  const container = document.querySelector("#tabDashboard");
+  if (!container) return;
 
-      window._radarChart = new Chart(ctxRadar, {
-        type: "radar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Progreso (%)",
-              data: percent,
-              fill: true,
-              backgroundColor: "rgba(59, 130, 246, 0.2)",
-              borderColor: "rgba(59, 130, 246, 1)",
-              pointBackgroundColor: "rgba(59, 130, 246, 1)",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            r: { suggestedMin: 0, suggestedMax: 100, ticks: { stepSize: 25 } },
-          },
-          plugins: { legend: { position: "bottom" } },
-        },
-      });
+  const canvasId = "chart-radar";
+  let canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    canvas = document.createElement("canvas");
+    canvas.id = canvasId;
+    container.appendChild(canvas);
+  }
+
+  const labels = categories.map(c => c.name);
+  const data = categories.map(c => (c.total ? (c.done / c.total) * 100 : 0));
+
+  new Chart(canvas, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Avance",
+        data,
+        borderColor: "#4BC0C0",
+        backgroundColor: "rgba(75,192,192,0.2)"
+      }]
+    },
+    options: {
+      scales: { r: { beginAtZero: true, max: 100 } }
     }
+  });
+}
 
-    // --- Progreso global ---
-    const avg = percent.length ? Math.round(percent.reduce((a,b)=>a+b,0)/percent.length) : 0;
-    setText($("#globalProgressText"), `${avg}% completado`);
-  } catch (err) {
-    console.error("Error al renderizar dashboard:", err);
+function updateGlobalProgress(global) {
+  const progressText = document.querySelector("#progressGlobal");
+  if (progressText) {
+    const percent = global.total ? Math.round((global.done / global.total) * 100) : 0;
+    progressText.textContent = `Progreso global: ${percent}% (${global.done}/${global.total})`;
   }
 }
 
-// =============================================================
-// 🔹 CHECKLIST: actualizar progreso
-// =============================================================
-async function toggleItemProgress(itemId, completed) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return alert("Por favor inicia sesión.");
+/**********************
+ * 5. INICIALIZACIÓN
+ **********************/
+async function initDashboard() {
+  console.info("🚀 Cargando Dashboard...");
 
-    const { error } = await supabase.rpc("upsert_progress", {
-      p_user_id: user.id,
-      p_item_id: itemId,
-      p_completed: completed,
-    });
-    if (error) throw error;
+  const [cats, global] = await Promise.all([
+    fetchCategoryProgress(),
+    fetchGlobalProgress()
+  ]);
 
-    fetchProgress(); // refrescar dashboard
-  } catch (err) {
-    console.error("Error al actualizar progreso:", err);
-  }
-}
-
-// =============================================================
-// 🔹 UI AUTH: eventos y estado
-// =============================================================
-function updateAuthUI(user){
-  const btnOpen = $("#btnOpenLogin");
-  const btnLogout = $("#btnLogout");
-  if (user){
-    hide(btnOpen);
-    show(btnLogout);
-    hide($("#authModal"));
+  if (cats.length > 0) {
+    drawCategoryBars(cats);
+    drawRadar(cats);
   } else {
-    show(btnOpen);
-    hide(btnLogout);
+    console.warn("⚠️ No hay categorías registradas.");
   }
+
+  updateGlobalProgress(global);
 }
 
-function attachAuthEvents(){
-  // Abrir / cerrar modal
-  $("#btnOpenLogin")?.addEventListener("click", (e)=>{ e.preventDefault(); show($("#authModal")); });
-  $("#btnCloseAuth")?.addEventListener("click", ()=> hide($("#authModal")));
-  $("#authModal")?.addEventListener("click",(e)=>{ if(e.target.id==="authModal") hide(e.target); });
-
-  // Tabs
-  document.querySelectorAll(".auth-tab").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".auth-tab").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      const tab = btn.dataset.tab;
-      if(tab==="login"){ show($("#formLogin")); hide($("#formSignup")); }
-      else { show($("#formSignup")); hide($("#formLogin")); }
-    });
-  });
-
-  // Login
-  $("#formLogin")?.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    setText($("#authLoginMsg"), "");
-    const email = $("#loginEmail").value.trim();
-    const pass  = $("#loginPassword").value.trim();
-    try {
-      const user = await signInWithEmail(email, pass);
-      updateAuthUI(user);
-      fetchProgress();
-    } catch (err){
-      console.error(err);
-      setText($("#authLoginMsg"), err.message || "No se pudo iniciar sesión");
-    }
-  });
-
-  // Reset password
-  $("#btnResetPass")?.addEventListener("click", async (e)=>{
-    e.preventDefault();
-    const email = prompt("Ingresa tu email para restablecer contraseña:");
-    if(!email) return;
-    try{
-      await sendResetPassword(email);
-      alert("Si el correo existe, recibirás un enlace de restablecimiento.");
-    }catch(err){
-      alert("No se pudo enviar el correo: " + err.message);
-    }
-  });
-
-  // Signup
-  $("#formSignup")?.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    setText($("#authSignupMsg"), "");
-    const email = $("#signupEmail").value.trim();
-    const pass  = $("#signupPassword").value.trim();
-    try {
-      await signUpWithEmail(email, pass);
-      setText($("#authSignupMsg"), "Cuenta creada. Revisa tu correo para verificarla.");
-    } catch (err){
-      console.error(err);
-      setText($("#authSignupMsg"), err.message || "No se pudo crear la cuenta");
-    }
-  });
-
-  // Logout
-  $("#btnLogout")?.addEventListener("click", async ()=>{
-    await signOut();
-  });
-}
-
-// =============================================================
-// 🔹 INICIALIZACIÓN
-// =============================================================
-document.addEventListener("DOMContentLoaded", async () => {
-  attachAuthEvents();
-
-  // Estado inicial de sesión
-  const { data: { user } } = await supabase.auth.getUser();
-  updateAuthUI(user || null);
-  if (user) fetchProgress();
-
-  // Reaccionar a cambios de sesión
-  supabase.auth.onAuthStateChange((evt, session)=>{
-    updateAuthUI(session?.user || null);
-    if (session?.user) fetchProgress();
-  });
+window.addEventListener("DOMContentLoaded", () => {
+  initDashboard().catch(err => console.error("Error inicializando:", err));
 });
