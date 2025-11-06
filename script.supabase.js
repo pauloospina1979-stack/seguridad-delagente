@@ -1,319 +1,457 @@
-/*****  CONFIGURA AQUÍ SUPABASE  *****/
-const SUPABASE_URL  = "https://piqobvnfkglhwkhqzvpe.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";
+/***** CONFIG SUPABASE *****/
+const SUPABASE_URL  = "https://piqobvnfkglhwkhqzvpe.supabase.co";          // <-- EDITA
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";                        // <-- EDITA
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-/*****  CATEGORÍAS E ÍTEMS  *****/
-/* Puedes agregar/editar aquí. Cada item_id debe ser único. */
-const CATEGORIES = [
-  {
-    id: "auth", name: "Autenticación", icon: "img/icons/auth.svg",
-    items: [
-      { id: "auth/password_manager", title: "Usa un gestor de contraseñas", desc: "Contraseñas únicas y fuertes por servicio.", link: "https://ssd.eff.org/" },
-      { id: "auth/mfa_totp", title: "Activa MFA/TOTP o llave física", desc: "Evita SMS cuando sea posible y guarda códigos de recuperación." },
-      { id: "auth/passphrases_14", title: "Contraseñas largas (≥14) o passphrases", desc: "No reutilices contraseñas entre servicios críticos." },
-      { id: "auth/recovery_methods", title: "Revisa métodos de recuperación", desc: "Correo alterno y teléfono vigente." },
-      { id: "auth/logout_inactive", title: "Cierra sesiones en dispositivos que no usas", desc: "Revisa dispositivos o sesiones activas." },
-      { id: "auth/password_change", title: "Cambia contraseñas tras incidentes", desc: "Filtraciones, malware o sospechas de acceso." }
-    ]
-  },
-  {
-    id: "web", name: "Navegación web", icon: "img/icons/web.svg",
-    items: [
-      { id: "web/update_browser", title: "Mantén el navegador actualizado", desc: "Activa actualizaciones automáticas." },
-      { id: "web/extensions_minimum", title: "Extensiones necesarias y confiables", desc: "Revisa permisos y elimina las que no uses." },
-      { id: "web/https_first", title: "Prioriza HTTPS", desc: "Evita ingresar credenciales en sitios sin candado." }
-    ]
-  },
-  {
-    id: "mail", name: "Correo electrónico", icon: "img/icons/mail.svg",
-    items: [
-      { id: "mail/spam_filters", title: "Activa filtros anti-phishing", desc: "Capacítate para reconocer correos sospechosos." },
-      { id: "mail/dkim_dmarc", title: "Verifica remitente/DMARC", desc: "Desconfía de dominios parecidos." }
-    ]
-  },
-  {
-    id: "msg", name: "Mensajería", icon: "img/icons/msg.svg",
-    items: [
-      { id: "msg/e2ee", title: "Usa cifrado de extremo a extremo", desc: "Prefiere apps con E2EE." },
-      { id: "msg/verify_contacts", title: "Verifica contactos en transferencias", desc: "Evita suplantación antes de enviar datos." }
-    ]
-  },
-  {
-    id: "social", name: "Redes sociales", icon: "img/icons/social.svg",
-    items: [
-      { id: "social/privacy", title: "Revisa privacidad de perfiles", desc: "Limita visibilidad de datos sensibles." },
-      { id: "social/2fa", title: "Activa 2FA en redes", desc: "Protege la cuenta ante robo de contraseña." }
-    ]
-  },
-  {
-    id: "net", name: "Redes", icon: "img/icons/net.svg",
-    items: [
-      { id: "net/wifi_password", title: "Wi-Fi con WPA2/3 y clave fuerte", desc: "Cambia credenciales por defecto." },
-      { id: "net/guest_network", title: "Red de invitados separada", desc: "Aísla dispositivos no confiables." }
-    ]
-  },
-  {
-    id: "mobile", name: "Dispositivos móviles", icon: "img/icons/mobile.svg",
-    items: [
-      { id: "mobile/updates", title: "Sistema y apps actualizadas", desc: "Automatiza updates." },
-      { id: "mobile/lock", title: "Bloqueo seguro (biometría/PIN)", desc: "Activa borrado remoto si es posible." }
-    ]
-  },
-  {
-    id: "pc", name: "PC’s Personales", icon: "img/icons/pc.svg",
-    items: [
-      { id: "pc/updates", title: "Sistema actualizado", desc: "Parchea vulnerabilidades." },
-      { id: "pc/antimalware", title: "Antimalware activo", desc: "Evita software pirata." }
-    ]
-  },
-  {
-    id: "finance", name: "Finanzas personales", icon: "img/icons/finance.svg",
-    items: [
-      { id: "finance/cards", title: "Notificaciones de tarjetas/bancos", desc: "Activa alertas y límites." },
-      { id: "finance/phishing", title: "Evita enlaces en correos de bancos", desc: "Escribe la URL manualmente." }
-    ]
-  },
-  {
-    id: "human", name: "Aspecto Humano e Ingeniería Social", icon: "img/icons/human.svg",
-    items: [
-      { id: "human/awareness", title: "Capacitación y simulaciones", desc: "Refuerza el criterio ante fraudes." },
-      { id: "human/report", title: "Reporta incidentes temprano", desc: "Baja impacto y tiempos de respuesta." }
-    ]
-  }
+/***** ADMIN ALLOWLIST (edita las cuentas admin) *****/
+const ADMIN_EMAILS = [
+  "tu.correo@dominio.com",
+  "otro.admin@dominio.com"
 ];
 
-/*****  ESTADO  *****/
-let SESSION = null;         // auth session
-let PROGRESS = new Map();   // key: item_id, value: true/false
+/***** CATEGORÍAS (id debe coincidir con tu BD) *****/
+const CATEGORIES = [
+  { id: "auth",   name: "Autenticación",      anchor: "#cat-auth",   icon: "🔐" },
+  { id: "emails", name: "Correo seguro",      anchor: "#cat-emails", icon: "✉️" },
+  { id: "web",    name: "Navegación segura",  anchor: "#cat-web",    icon: "🌐" },
+  { id: "files",  name: "Archivos/Adjuntos",  anchor: "#cat-files",  icon: "📎" },
+  { id: "devices",name: "Dispositivos",       anchor: "#cat-dev",    icon: "💻" },
+  { id: "privacy",name: "Privacidad/Datos",   anchor: "#cat-priv",   icon: "🛡️" }
+];
 
-/*****  UTIL  *****/
-const qs = sel => document.querySelector(sel);
-function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+/***** ESTADO *****/
+let currentUser = null;
+let charts = {};
 
-/*****  TEMA  *****/
-(function initTheme(){
-  const saved = localStorage.getItem("theme") || "light";
-  if (saved === "dark") document.documentElement.classList.add("dark");
-  qs("#btn-theme").textContent = saved === "dark" ? "Tema claro" : "Tema oscuro";
-})();
-qs("#btn-theme").addEventListener("click", () => {
-  const isDark = document.documentElement.classList.toggle("dark");
-  localStorage.setItem("theme", isDark ? "dark":"light");
-  qs("#btn-theme").textContent = isDark ? "Tema claro" : "Tema oscuro";
-});
+/***** UI ELEMENTS *****/
+const btnDashboard = document.getElementById("btnDashboard");
+const btnChecklist = document.getElementById("btnChecklist");
+const btnAdmin = document.getElementById("btnAdmin");
+const btnLogin = document.getElementById("btnLogin");
+const btnLogout = document.getElementById("btnLogout");
 
-/*****  AUTH UI  *****/
-const authModal = qs("#authModal");
-qs("#btn-auth").addEventListener("click", () => authModal.showModal());
-qs("#btn-register").addEventListener("click", onRegister);
-qs("#btn-login").addEventListener("click", onLogin);
+const tabDashboard = document.getElementById("tabDashboard");
+const tabChecklist = document.getElementById("tabChecklist");
+const tabAdmin = document.getElementById("tabAdmin");
 
-async function onRegister(){
-  const email = qs("#email").value.trim();
-  const password = qs("#password").value;
-  qs("#authMsg").textContent = "Registrando…";
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return qs("#authMsg").textContent = error.message;
-  qs("#authMsg").textContent = "Revisa tu correo para confirmar la cuenta.";
-}
-async function onLogin(){
-  const email = qs("#email").value.trim();
-  const password = qs("#password").value;
-  qs("#authMsg").textContent = "Iniciando sesión…";
+const viewDashboard = document.getElementById("viewDashboard");
+const viewChecklist = document.getElementById("viewChecklist");
+const viewAdmin = document.getElementById("viewAdmin");
+
+const categoriesContainer = document.getElementById("categoriesContainer");
+
+/***** NAV *****/
+btnDashboard.onclick = () => switchTab("dashboard");
+btnChecklist.onclick  = () => switchTab("checklist");
+btnAdmin.onclick      = () => switchTab("admin");
+
+tabDashboard.onclick  = () => switchTab("dashboard");
+tabChecklist.onclick  = () => switchTab("checklist");
+tabAdmin.onclick      = () => switchTab("admin");
+
+btnLogin.onclick = async () => {
+  const email = prompt("Correo:");
+  const password = prompt("Contraseña:");
+  if (!email || !password) return;
+
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return qs("#authMsg").textContent = error.message;
-  authModal.close();
+  if (error) { alert("Error de login: " + error.message); return; }
+  currentUser = data.user;
+  await afterAuth();
+};
+
+btnLogout.onclick = async () => {
+  await supabase.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  // limpiamos admin
+  clearAdmin();
+  switchTab("dashboard");
+};
+
+/***** INIT *****/
+(async function init() {
+  const { data: { user } } = await supabase.auth.getUser();
+  currentUser = user ?? null;
+  updateAuthUI();
+
+  await renderChecklist();         // pinta checklist
+  await renderDashboard();         // pinta charts dashboard
+
+  if (isAdmin()) {
+    await renderAdmin();           // pinta admin si aplica
+  }
+
+  // Deep-link a categoría (si URL tiene hash)
+  if (location.hash) {
+    switchTab("checklist");
+    scrollToAnchor(location.hash);
+  }
+})();
+
+/***** POST-AUTH *****/
+async function afterAuth() {
+  updateAuthUI();
+  await renderDashboard();
+  await renderChecklist();
+  if (isAdmin()) await renderAdmin();
 }
 
-supabase.auth.onAuthStateChange((_event, session) => {
-  SESSION = session;
-  qs("#btn-auth").textContent = session ? "Salir" : "Iniciar sesión";
-  qs("#btn-auth").onclick = session ? async () => { await supabase.auth.signOut(); location.reload(); } : () => authModal.showModal();
-  if (session) bootstrap();
-});
-
-/*****  RENDER BASE  *****/
-const checklistEl   = qs("#checklist");
-const categoryNavEl = qs("#categoryNav");
-
-function renderCategoryNav(progressByCat){
-  categoryNavEl.innerHTML = "";
-  for(const cat of CATEGORIES){
-    const stats = progressByCat.get(cat.id) || { done:0, total: cat.items.length };
-    const pct = Math.round(100 * clamp01(stats.total ? stats.done / stats.total : 0));
-    const a = document.createElement("a");
-    a.className = "cat";
-    a.href = `#cat-${cat.id}`;
-    a.innerHTML = `
-      <img src="${cat.icon}" alt="" onerror="this.replaceWith(document.createTextNode('📌'))">
-      <div class="name">${cat.name}</div>
-      <div class="spacer"></div>
-      <div class="bar"><span style="width:${pct}%"></span></div>
-      <div class="pill" style="min-width:60px; text-align:right;">${pct}%</div>
-    `;
-    categoryNavEl.appendChild(a);
+/***** AUTH UI *****/
+function updateAuthUI() {
+  if (currentUser) {
+    btnLogin.style.display = "none";
+    btnLogout.style.display = "inline-block";
+    if (isAdmin()) {
+      btnAdmin.style.display = "inline-block";
+      tabAdmin.style.display = "inline-block";
+    } else {
+      btnAdmin.style.display = "none";
+      tabAdmin.style.display = "none";
+    }
+  } else {
+    btnLogin.style.display = "inline-block";
+    btnLogout.style.display = "none";
+    btnAdmin.style.display = "none";
+    tabAdmin.style.display = "none";
   }
 }
 
-function renderChecklist(){
-  checklistEl.innerHTML = "";
-  for(const cat of CATEGORIES){
-    const sec = document.createElement("section");
-    sec.id = `cat-${cat.id}`;
-    sec.innerHTML = `<h2>${cat.name}</h2>`;
-    const box = document.createElement("div");
-    for(const it of cat.items){
+/***** CHECK ADMIN *****/
+function isAdmin() {
+  if (!currentUser || !currentUser.email) return false;
+  return ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+}
+
+/***** TABS *****/
+function switchTab(which) {
+  // tabs
+  tabDashboard.classList.remove("active");
+  tabChecklist.classList.remove("active");
+  tabAdmin.classList.remove("active");
+
+  // views
+  viewDashboard.style.display = "none";
+  viewChecklist.style.display = "none";
+  viewAdmin.style.display = "none";
+
+  if (which === "dashboard") {
+    tabDashboard.classList.add("active");
+    viewDashboard.style.display = "grid";
+  } else if (which === "checklist") {
+    tabChecklist.classList.add("active");
+    viewChecklist.style.display = "grid";
+  } else if (which === "admin") {
+    tabAdmin.classList.add("active");
+    viewAdmin.style.display = "grid";
+  }
+}
+
+/***** DASHBOARD *****/
+async function renderDashboard() {
+  // 1) Avance por categoría (para el usuario actual si está logueado, si no, 0%)
+  const catLabels = CATEGORIES.map(c => c.name);
+  const catIds    = CATEGORIES.map(c => c.id);
+
+  let catPercents = new Array(CATEGORIES.length).fill(0);
+
+  // leer conteo por categoría para el usuario actual
+  if (currentUser) {
+    const userId = currentUser.id;
+
+    // Para cada categoría contamos total y completados (usando tus tablas)
+    for (let i = 0; i < CATEGORIES.length; i++) {
+      const catId = CATEGORIES[i].id;
+
+      // total items en categoría
+      const { data: totalItems, error: errT } = await supabase
+        .from("items")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", catId);
+      const total = totalItems?.length ?? (errT ? 0 : 0) || (typeof totalItems === "number" ? totalItems : (totalItems?.count || 0));
+
+      // completados por usuario
+      const { count: completedCount, error: errC } = await supabase
+        .from("progress")
+        .select("*", { count: "exact", head: true })
+        .eq("category_id", catId)
+        .eq("user_id", userId)
+        .eq("completed", true);
+
+      const completed = completedCount ?? 0;
+      const pct = total > 0 ? Math.round((completed / total) * 1000) / 10 : 0;
+      catPercents[i] = pct;
+    }
+  }
+
+  // 1A) Barras horizontales con click para navegar a la categoría
+  makeOrUpdateHorizontalBar(
+    "chartAvanceCat",
+    catLabels,
+    catPercents,
+    (labelIndex) => {
+      const cat = CATEGORIES[labelIndex];
+      if (!cat) return;
+      switchTab("checklist");
+      scrollToAnchor(cat.anchor);
+    }
+  );
+
+  // 2) Distribución tipo malla (radar) conectada al avance real
+  makeOrUpdateRadar("chartDistribucion", catLabels, catPercents);
+
+  // 3) Progreso global texto
+  const globalPct = Math.round(
+    catPercents.reduce((a,b)=>a+b, 0) / Math.max(catPercents.length,1) * 10
+  ) / 10;
+  const el = document.getElementById("progressGlobal");
+  el.textContent = currentUser
+    ? `Tu avance global es ${globalPct}%`
+    : `Inicia sesión para ver tu avance global.`;
+}
+
+/***** CHECKLIST *****/
+/* Ejemplo simple que pinta categorías y “items” con checkbox.
+   Ajusta si ya tenías items en tu BD. */
+async function renderChecklist() {
+  categoriesContainer.innerHTML = "";
+
+  for (const cat of CATEGORIES) {
+    // Título de categoría con ancla
+    const wrap = document.createElement("div");
+    wrap.className = "category";
+    wrap.id = cat.anchor.substring(1); // quitar '#'
+
+    const title = document.createElement("h4");
+    title.innerHTML = `${cat.icon} ${cat.name}`;
+    wrap.appendChild(title);
+
+    // Cargar items de la BD
+    const { data: items, error } = await supabase
+      .from("items")
+      .select("id, title, description")
+      .eq("category_id", cat.id)
+      .order("id", { ascending: true });
+
+    if (error) {
+      const p = document.createElement("p");
+      p.className = "muted";
+      p.textContent = "No se pudieron cargar los ítems.";
+      wrap.appendChild(p);
+      categoriesContainer.appendChild(wrap);
+      continue;
+    }
+
+    // Para cada item, checkbox + título
+    for (const it of items) {
       const row = document.createElement("div");
       row.className = "item";
-      const checked = !!PROGRESS.get(it.id);
-      row.innerHTML = `
-        <input type="checkbox" ${checked ? "checked":""} data-item="${it.id}" data-cat="${cat.id}">
-        <div>
-          <div class="item-title">${it.title}</div>
-          <div class="muted">${it.desc || ""} ${it.link?`<a href="${it.link}" target="_blank">Guía</a>`:""}</div>
-        </div>
-      `;
-      box.appendChild(row);
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="title">${it.title}</div><div class="meta">${it.description ?? ""}</div>`;
+
+      const right = document.createElement("div");
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.disabled = !currentUser; // si no has iniciado sesión, no puedes marcar
+
+      if (currentUser) {
+        // traer estado actual
+        const { data: prog } = await supabase
+          .from("progress")
+          .select("completed")
+          .eq("user_id", currentUser.id)
+          .eq("item_id", it.id)
+          .maybeSingle();
+        chk.checked = prog?.completed ?? false;
+
+        chk.addEventListener("change", async () => {
+          await supabase.from("progress").upsert({
+            user_id: currentUser.id,
+            item_id: it.id,
+            category_id: cat.id,
+            completed: chk.checked
+          }, { onConflict: "user_id,item_id" });
+
+          // refresca dashboard para reflejar porcentajes
+          await renderDashboard();
+        });
+      }
+
+      right.appendChild(chk);
+
+      row.appendChild(left);
+      row.appendChild(right);
+      wrap.appendChild(row);
     }
-    sec.appendChild(box);
-    checklistEl.appendChild(sec);
+
+    categoriesContainer.appendChild(wrap);
   }
-  checklistEl.addEventListener("change", onToggleItem, { once:false });
 }
 
-/*****  BUSCADOR  *****/
-qs("#search").addEventListener("input", e => {
-  const q = e.target.value.toLowerCase();
-  document.querySelectorAll(".item").forEach(div => {
-    const t = div.querySelector(".item-title").textContent.toLowerCase();
-    const d = div.querySelector(".muted").textContent.toLowerCase();
-    div.style.display = (t.includes(q) || d.includes(q)) ? "" : "none";
-  });
-});
+/***** ADMIN PANEL *****/
+async function renderAdmin() {
+  // Charts
+  const global = await supabase.rpc("progress_summary_user_global");
+  const byCat  = await supabase.rpc("progress_summary_per_user");
 
-/*****  PROGRESO  *****/
-function computeStats(){
-  let total = 0, done = 0;
-  const byCat = new Map();
-  for(const cat of CATEGORIES){
-    const t = cat.items.length;
-    const d = cat.items.filter(i => PROGRESS.get(i.id)).length;
-    byCat.set(cat.id, { done:d, total:t });
-    total += t; done += d;
+  if (global.error) {
+    document.getElementById("adminLegend").textContent = "Error cargando resumen global: " + global.error.message;
+    return;
   }
-  const pct = total ? Math.round(100 * done/total) : 0;
-  qs("#progress-text").textContent = `${pct}% (${done}/${total})`;
-  qs("#progress-bar").style.width = `${pct}%`;
-  return { byCat, total, done, pct };
+  if (byCat.error) {
+    document.getElementById("adminLegend").textContent = "Error cargando detalle por categoría: " + byCat.error.message;
+    return;
+  }
+
+  const users = (global.data || []).slice(0, 20); // top 20 p/visual
+  makeOrUpdateHorizontalBar("chartUsersGlobal",
+    users.map(u => u.email || "Sin email"),
+    users.map(u => Number(u.pct || 0))
+  );
+
+  // Para UsersByCat: agregamos por email y categoría
+  const rows = byCat.data || [];
+  // Pintar la tabla
+  paintAdminTable(rows);
+
+  // Gráfico: promedio por categoría (todos los usuarios)
+  const catMap = new Map(); // {category_name -> [pct...]}
+  for (const r of rows) {
+    const key = r.category_name || r.category_id;
+    if (!catMap.has(key)) catMap.set(key, []);
+    catMap.get(key).push(Number(r.pct || 0));
+  }
+  const catNames = Array.from(catMap.keys());
+  const catAvg = catNames.map(n => {
+    const arr = catMap.get(n);
+    const sum = arr.reduce((a,b)=>a+b,0);
+    return Math.round((sum/Math.max(arr.length,1))*10)/10;
+  });
+  makeOrUpdateRadar("chartUsersByCat", catNames, catAvg);
+
+  // Búsqueda por email
+  const inp = document.getElementById("searchEmail");
+  inp.oninput = () => {
+    const term = (inp.value || "").toLowerCase();
+    const filtered = rows.filter(r => (r.email || "").toLowerCase().includes(term));
+    paintAdminTable(filtered);
+  };
 }
 
-/*****  CHARTS  *****/
-let chartBars, chartRadar;
-function renderCharts(byCat){
-  const labels = CATEGORIES.map(c => c.name);
-  const values = CATEGORIES.map(c => {
-    const s = byCat.get(c.id) || {done:0,total:c.items.length};
-    return s.total ? Math.round(100*s.done/s.total) : 0;
-  });
+function clearAdmin() {
+  const tbody = document.getElementById("tblAdminBody");
+  tbody.innerHTML = "";
+  const legend = document.getElementById("adminLegend");
+  legend.textContent = "";
+  destroyChart("chartUsersGlobal");
+  destroyChart("chartUsersByCat");
+}
 
-  // BARRAS HORIZONTALES
-  const ctx1 = document.getElementById("chartBars");
-  chartBars?.destroy();
-  chartBars = new Chart(ctx1, {
+function paintAdminTable(rows) {
+  const tbody = document.getElementById("tblAdminBody");
+  tbody.innerHTML = "";
+  const legend = document.getElementById("adminLegend");
+  legend.textContent = `Mostrando ${rows.length} filas`;
+
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    const pct = Number(r.pct || 0);
+
+    tr.innerHTML = `
+      <td>${r.email || "—"}</td>
+      <td>${r.category_name || r.category_id}</td>
+      <td>${r.completed_items || 0}</td>
+      <td>${r.total_items || 0}</td>
+      <td>
+        <span class="pill ${pct>=80?"ok":pct>=40?"warn":"err"}">${pct}%</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+/***** CHART HELPERS *****/
+function destroyChart(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
+  }
+}
+
+// Barras horizontales + callback en etiqueta
+function makeOrUpdateHorizontalBar(canvasId, labels, data, onLabelClick) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  destroyChart(canvasId);
+
+  charts[canvasId] = new Chart(ctx, {
     type: "bar",
-    data: { labels, datasets: [{ label: "Avance (%)", data: values }]},
+    data: {
+      labels,
+      datasets: [{
+        label: "% completado",
+        data,
+        borderWidth: 1
+      }]
+    },
     options: {
       indexAxis: "y",
       responsive: true,
-      plugins: { legend: { display:false }, tooltip:{ enabled:true }},
-      scales: { x: { min:0, max:100, ticks:{ stepSize:20 }}},
-      onClick: (_evt, els) => {
-        const e = els[0]; if (!e) return;
-        const cat = CATEGORIES[e.index];
-        location.hash = `#cat-${cat.id}`;
-        document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior:"smooth", block:"start" });
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, max: 100, ticks: { color: "#a8b3c7" }, grid: { color: "#1b2430" } },
+        y: { ticks: { color: "#e7eef6" }, grid: { color: "#1b2430" } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true }
+      },
+      onClick: (evt, elements) => {
+        if (!elements || elements.length === 0) return;
+        const idx = elements[0].index;
+        if (onLabelClick) onLabelClick(idx);
       }
     }
   });
+}
 
-  // RADAR (malla) — mismo avance
-  const ctx2 = document.getElementById("chartRadar");
-  chartRadar?.destroy();
-  chartRadar = new Chart(ctx2, {
+function makeOrUpdateRadar(canvasId, labels, data) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  destroyChart(canvasId);
+
+  charts[canvasId] = new Chart(ctx, {
     type: "radar",
     data: {
       labels,
       datasets: [{
-        label: "Completado",
-        data: values,
-        fill: true,
-        borderWidth: 2
+        label: "% por categoría",
+        data,
+        borderWidth: 2,
+        pointRadius: 3
       }]
     },
     options: {
       responsive: true,
-      plugins: { legend: { display:false }},
-      scales: { r: { min:0, max:100, ticks: { stepSize:25 }}}
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          angleLines: { color: "#1b2430" },
+          grid: { color: "#1b2430" },
+          suggestedMin: 0,
+          suggestedMax: 100,
+          pointLabels: { color: "#e7eef6" },
+          ticks: { color: "#a8b3c7", showLabelBackdrop: false }
+        }
+      },
+      plugins: { legend: { display: false } }
     }
   });
 }
 
-/*****  HANDLERS  *****/
-async function onToggleItem(e){
-  const cb = e.target;
-  if (cb.tagName !== "INPUT") return;
-  const item_id = cb.dataset.item;
-  const category_id = cb.dataset.cat;
-  const completed = cb.checked;
-  PROGRESS.set(item_id, completed);
-
-  // Guardar en Supabase (upsert)
-  if (!SESSION) return;
-  await supabase.from("progress").upsert(
-    [{ user_id: SESSION.user.id, item_id, category_id, completed }],
-    { onConflict: "user_id,item_id" }
-  );
-
-  // Recalcular y refrescar gráficos + barras de navegación
-  const { byCat } = computeStats();
-  renderCategoryNav(byCat);
-  renderCharts(byCat);
+/***** UTILS *****/
+function scrollToAnchor(hash) {
+  const id = hash.startsWith("#") ? hash.substring(1) : hash;
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-/*****  CARGA PROGRESO DEL USUARIO  *****/
-async function loadProgress(){
-  PROGRESS = new Map();
-  if (!SESSION) return;
-  const { data, error } = await supabase.from("progress")
-    .select("item_id, completed");
-  if (!error && data) {
-    for(const r of data) PROGRESS.set(r.item_id, !!r.completed);
-  }
-}
-
-/*****  INICIALIZACIÓN  *****/
-function renderShell(){
-  renderChecklist();            // pinta items
-  const { byCat } = computeStats();
-  renderCategoryNav(byCat);     // muestra navegación por categoría con barra
-  renderCharts(byCat);          // inicializa gráficos
-}
-
-async function bootstrap(){
-  await loadProgress();
-  renderShell();
-}
-
-// Primera carga: si ya hay sesión, bootstrap; si no, pinta shell vacío
-(async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  SESSION = session || null;
-  renderShell();
-  if (SESSION) bootstrap();
-})();
-
-// Botón "Ir al checklist" -> hace scroll
-qs("#btn-checklist").addEventListener("click", () => {
-  document.getElementById("checklistTop")?.scrollIntoView({ behavior:"smooth", block:"start" });
-});

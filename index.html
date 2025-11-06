@@ -1,128 +1,193 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8" />
   <title>Seguridad Delagente</title>
-  <link rel="stylesheet" href="styles.css"/>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Fuentes / Estilos básicos -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --brand:#0b132b; --bg:#ffffff; --fg:#101114; --muted:#6b7280; --card:#f7f7f9; --border:#e5e7eb;
+      --bg: #0b0f14;
+      --panel: #121923;
+      --text: #e7eef6;
+      --muted: #a8b3c7;
+      --accent: #4da3ff;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --error: #ef4444;
+      --card: #0f1520;
+      --border: #1b2430;
     }
-    .dark { --bg:#0b0f14; --fg:#e8eef5; --muted:#94a3b8; --card:#0f141b; --border:#1f2937; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:var(--bg); color:var(--fg); }
-    header { display:flex; align-items:center; gap:16px; padding:16px 20px; border-bottom:1px solid var(--border); }
-    header img.logo { height:34px; object-fit:contain; }
-    header h1 { font-size:1.4rem; margin:0; font-weight:700; }
-    .spacer { flex:1; }
-    .btn { border:1px solid var(--border); background:#111827; color:#fff; padding:10px 14px; border-radius:999px; cursor:pointer; font-weight:600; }
-    .btn.secondary { background:transparent; color:var(--fg); }
-    main { padding:24px; max-width:1200px; margin:0 auto; }
-    .lead { color:var(--muted); margin:4px 0 18px; }
-    .search { width:100%; border:1px solid var(--border); border-radius:10px; padding:14px 16px; color:var(--fg); background:var(--card); }
-    .progress-track { height:8px; background:var(--card); border-radius:999px; overflow:hidden; }
-    .progress-bar { height:100%; background:#10b981; width:0%; transition:width .3s; }
-    .grid { display:grid; gap:20px; grid-template-columns:1fr 1fr; margin:22px 0; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
-    .card h3 { margin:0 0 12px; font-size:1.1rem; }
-    .chart-wrap { height:340px; }
-    .categories { display:flex; flex-direction:column; gap:14px; }
-    .cat { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--card); border:1px solid var(--border); border-radius:12px; cursor:pointer; text-decoration:none; color:inherit; }
-    .cat:hover { outline:2px solid #d1d5db44; }
-    .cat img { width:28px; height:28px; object-fit:contain; }
-    .cat .name { font-weight:600; }
-    .pill { font-size:.9rem; color:var(--muted); }
-    .bar { flex:1; height:8px; background:#e5e7eb22; border-radius:999px; overflow:hidden; }
-    .bar > span { display:block; height:100%; background:#3b82f6; width:0%; transition:width .3s; }
-    section { margin:28px 0 12px; }
-    section h2 { font-size:1.4rem; margin:0 0 8px; }
-    .item { display:flex; align-items:flex-start; gap:12px; padding:14px 10px; border-bottom:1px dashed var(--border); }
-    .item:last-child { border-bottom:none; }
-    .item input { margin-top:3px; }
-    .item-title { font-weight:700; }
-    .muted { color:var(--muted); }
-    footer { text-align:center; padding:24px; color:var(--muted); }
-    /* Modal Auth */
-    dialog { border:none; border-radius:16px; width:min(420px, 96vw); background:var(--bg); color:var(--fg); padding:0; }
-    .modal { padding:18px; }
-    .modal h3 { margin:0 0 12px; }
-    .field { display:flex; flex-direction:column; gap:6px; margin:10px 0; }
-    .input { border:1px solid var(--border); background:var(--card); color:var(--fg); padding:10px 12px; border-radius:10px; }
-    .login-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:10px; }
-    @media (max-width: 900px) { .grid { grid-template-columns:1fr; } }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg,#0b0f14,#0b0f14 50%, #0a1018);
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px; border-bottom: 1px solid var(--border);
+      background: rgba(18,25,35,0.6); backdrop-filter: blur(8px); position: sticky; top:0; z-index: 10;
+    }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand img { height: 36px; width:auto; }
+    .brand h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+    nav { display:flex; gap: 8px; align-items: center; }
+    .btn {
+      border: 1px solid var(--border); background: #0f1520; color: var(--text);
+      padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: 600;
+    }
+    .btn.primary { background: var(--accent); border-color: transparent; color: #041423; }
+    .btn.ghost { background: transparent; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+
+    .grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card {
+      background: var(--card); border:1px solid var(--border); border-radius: 14px; padding: 16px;
+    }
+    .span-12 { grid-column: span 12; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+    .card h3 { margin: 0 0 10px; font-size: 16px; }
+    .muted { color: var(--muted); font-size: 13px; }
+
+    /* Checklist */
+    .category { margin: 20px 0; }
+    .category h4 { margin: 0 0 8px; font-size: 15px; }
+    .item {
+      display:flex; align-items:center; justify-content: space-between;
+      padding: 10px 12px; border:1px solid var(--border); border-radius: 12px; margin: 8px 0; background: #0b121c;
+    }
+    .item .title { font-weight: 600; }
+    .item .meta { font-size: 12px; color: var(--muted); }
+
+    /* Tabs */
+    .tabs { display:flex; gap:8px; margin: 12px 0 0; }
+    .tabs .tab {
+      padding: 8px 12px; border-radius: 10px; border:1px solid var(--border); background:#0f1520; cursor:pointer; font-weight:600; font-size:13px;
+    }
+    .tabs .tab.active { background: var(--accent); color:#041423; border-color: transparent; }
+
+    /* Admin */
+    .admin-controls { display:flex; gap: 12px; align-items: center; margin-bottom: 8px;}
+    .search { padding: 8px 10px; border-radius: 10px; border:1px solid var(--border); background:#0b121c; color:var(--text); min-width: 240px; }
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align:left; padding:10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight:600; }
+    tr:hover td { background:#0e1622; }
+
+    .pill { padding: 4px 8px; border-radius: 999px; font-weight:700; font-size: 12px; }
+    .pill.ok { background: #0d2b1a; color: #7ee2a6; border:1px solid #153f27; }
+    .pill.warn { background: #2b210d; color: #f5d08a; border:1px solid #473515; }
+    .pill.err { background: #2b0d0d; color: #f29696; border:1px solid #471515; }
+
+    a.link { color: var(--accent); text-decoration: none; }
+    a.link:hover { text-decoration: underline; }
   </style>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <header>
-    <img src="img/logo-comfenalco.jpg" alt="Comfenalco Valle" class="logo" onerror="this.replaceWith(document.createTextNode('🛡️'))">
-    <h1>Seguridad Delagente</h1>
-    <div class="spacer"></div>
-    <button id="btn-theme" class="btn secondary">Tema oscuro</button>
-    <button id="btn-checklist" class="btn">Ir al checklist</button>
-    <button id="btn-auth" class="btn secondary">Iniciar sesión</button>
+    <div class="brand">
+      <img src="./img/logo-comfenalco.png" alt="Logo" />
+      <h1>Seguridad Delagente</h1>
+    </div>
+    <nav>
+      <button id="btnDashboard" class="btn ghost">Dashboard</button>
+      <button id="btnChecklist" class="btn ghost">Checklist</button>
+      <button id="btnAdmin" class="btn ghost" style="display:none;">Admin</button>
+      <button id="btnLogin" class="btn primary">Iniciar sesión</button>
+      <button id="btnLogout" class="btn" style="display:none;">Cerrar sesión</button>
+    </nav>
   </header>
 
-  <main>
-    <p class="lead">Lista de verificación práctica de seguridad digital.</p>
-
-    <input id="search" class="search" placeholder="Buscar (ej. contraseñas, 2FA, correo)…"/>
-
-    <div style="display:flex; align-items:center; gap:10px; margin:14px 0 6px;">
-      <div><strong>Progreso:</strong> <span id="progress-text">0% (0/0)</span></div>
-      <div class="spacer"></div>
-      <div class="pill">Tus avances se guardan en tu cuenta.</div>
+  <main class="container">
+    <!-- TABS -->
+    <div class="tabs">
+      <div id="tabDashboard" class="tab active">Dashboard</div>
+      <div id="tabChecklist" class="tab">Checklist</div>
+      <div id="tabAdmin" class="tab" style="display:none;">Admin</div>
     </div>
-    <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
 
-    <!-- GRAFICOS -->
-    <div class="grid">
-      <div class="card">
+    <!-- DASHBOARD -->
+    <section id="viewDashboard" class="grid" style="margin-top:12px;">
+      <div class="card span-6">
         <h3>Avance por categoría</h3>
-        <div class="chart-wrap"><canvas id="chartBars"></canvas></div>
+        <p class="muted">Barras horizontales. Clic en el nombre te lleva a la categoría.</p>
+        <canvas id="chartAvanceCat" height="260"></canvas>
       </div>
-      <div class="card">
+      <div class="card span-6">
         <h3>Distribución de ítems</h3>
-        <div class="chart-wrap"><canvas id="chartRadar"></canvas></div>
+        <p class="muted">Gráfico tipo malla (radar) conectado al avance real.</p>
+        <canvas id="chartDistribucion" height="260"></canvas>
       </div>
-    </div>
 
-    <!-- NAVEGACIÓN POR CATEGORÍA -->
-    <div class="card">
-      <h3>Categorías</h3>
-      <div id="categoryNav" class="categories"></div>
-    </div>
+      <div class="card span-12">
+        <h3>Progreso global</h3>
+        <div id="progressGlobal" class="muted">Cargando…</div>
+      </div>
+    </section>
 
     <!-- CHECKLIST -->
-    <section id="checklistTop"><h2>Checklist</h2></section>
-    <div id="checklist"></div>
+    <section id="viewChecklist" class="grid" style="display:none; margin-top:12px;">
+      <div class="card span-12">
+        <h3>Checklist por categoría</h3>
+        <div id="categoriesContainer"></div>
+      </div>
+    </section>
 
-    <footer>© Comfenalco Valle delagente — Seguridad Delagente</footer>
+    <!-- ADMIN -->
+    <section id="viewAdmin" class="grid" style="display:none; margin-top:12px;">
+      <div class="card span-12">
+        <h3>Panel administrativo</h3>
+        <div class="admin-controls">
+          <input id="searchEmail" class="search" placeholder="Buscar por email…" />
+          <span class="muted">Solo visible para administradores</span>
+        </div>
+        <div class="grid">
+          <div class="card span-6">
+            <h3>Ranking global por usuario</h3>
+            <canvas id="chartUsersGlobal" height="260"></canvas>
+          </div>
+          <div class="card span-6">
+            <h3>Detalle por usuario y categoría</h3>
+            <canvas id="chartUsersByCat" height="260"></canvas>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px;">
+          <h3>Tabla de progreso</h3>
+          <div class="muted" id="adminLegend">Cargando…</div>
+          <table id="tblAdmin">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Categoría</th>
+                <th>Completados</th>
+                <th>Total</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody id="tblAdminBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <!-- MODAL AUTH -->
-  <dialog id="authModal">
-    <form method="dialog" class="modal" id="authForm">
-      <h3>Acceder</h3>
-      <div class="field">
-        <label>Email</label>
-        <input type="email" id="email" class="input" required>
-      </div>
-      <div class="field">
-        <label>Contraseña</label>
-        <input type="password" id="password" class="input" required>
-      </div>
-      <div class="login-actions">
-        <button id="btn-register" class="btn secondary" type="button">Crear cuenta</button>
-        <button id="btn-login" class="btn" type="button">Iniciar sesión</button>
-      </div>
-      <p id="authMsg" class="muted" style="margin-top:8px;"></p>
-    </form>
-  </dialog>
-
-  <script src="script.supabase.js"></script>
+  <script src="./script.supabase.js"></script>
 </body>
 </html>
