@@ -22,6 +22,64 @@
       --border: #1b2430;
     }
     * { box-sizing: border-box; }
+    /* ===== Auth Modal ===== */
+    .auth-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:60}
+    .auth-modal.hidden{display:none}
+    .auth-card{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:16px;padding:24px;min-width:320px;max-width:420px;width:100%;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+    .auth-close{position:absolute;margin:-8px 0 0 -8px;right:calc(50% - 210px);top:calc(50% - 190px);background:#1f2937;border:1px solid #374151;color:#9ca3af;border-radius:999px;width:36px;height:36px;cursor:pointer}
+    .auth-title{font-size:1.25rem;margin:0 0 10px}
+    .auth-tabs{display:flex;gap:8px;margin:8px 0 16px}
+    .auth-tab{flex:1;padding:8px 10px;border:1px solid #374151;background:#0b1220;color:#cbd5e1;border-radius:8px;cursor:pointer}
+    .auth-tab.active{background:#1f2937}
+    .auth-form{display:grid;gap:10px}
+    .auth-form.hidden{display:none}
+    .auth-form label{display:grid;gap:6px;font-size:.9rem}
+    .auth-form input{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:8px;padding:10px}
+    .auth-btn{background:#2563eb;border:none;color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer}
+    .auth-btn:hover{filter:brightness(1.05)}
+    .auth-help{font-size:.85rem;color:#9ca3af;margin:4px 0 0}
+    .auth-help a{color:#60a5fa}
+    .auth-msg{min-height:18px;font-size:.85rem;color:#fca5a5}
+
+  <!-- ========= Modal Auth ========= -->
+  <div id="authModal" class="auth-modal hidden">
+  <div class="auth-card">
+    <button class="auth-close" id="btnCloseAuth" aria-label="Cerrar">×</button>
+
+    <h2 class="auth-title">Accede a tu cuenta</h2>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Iniciar sesión</button>
+      <button class="auth-tab" data-tab="signup">Crear cuenta</button>
+    </div>
+
+    <!-- Login -->
+    <form id="formLogin" class="auth-form" autocomplete="on">
+      <label>Email
+        <input type="email" id="loginEmail" placeholder="tu@correo.com" required>
+      </label>
+      <label>Contraseña
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </label>
+      <button type="submit" class="auth-btn">Entrar</button>
+      <p class="auth-help">¿Olvidaste tu contraseña? <a id="btnResetPass" href="#">Restablecer</a></p>
+      <p id="authLoginMsg" class="auth-msg"></p>
+    </form>
+
+    <!-- Signup -->
+    <form id="formSignup" class="auth-form hidden" autocomplete="on">
+      <label>Email
+        <input type="email" id="signupEmail" placeholder="tu@correo.com" required>
+      </label>
+      <label>Contraseña
+        <input type="password" id="signupPassword" placeholder="Mín. 8 caracteres" minlength="8" required>
+      </label>
+      <button type="submit" class="auth-btn">Crear cuenta</button>
+      <p class="auth-help">Recibirás un correo de verificación.</p>
+      <p id="authSignupMsg" class="auth-msg"></p>
+    </form>
+  </div>
+  </div>  
     body {
       margin: 0;
       font-family: Inter, system-ui, sans-serif;
