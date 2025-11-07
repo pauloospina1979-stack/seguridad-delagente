@@ -160,17 +160,26 @@ async function fetchChecklistData(){
 }
 
 
-async function upsertProgress(itemId, completed){
-  // Llama al RPC correcto y con los nombres exactos de parámetros
-  const { error } = await sb.rpc('upsert_progress', {
+// Reemplaza TODO este bloque por este:
+
+async function upsertProgress(itemId, completed) {
+  // Obtén el user_id activo (o el FALLBACK si no hay sesión)
+  const p_user_id = await getActiveUserId();
+
+  // Llama al RPC con los nombres de argumentos correctos
+  const { data, error } = await sb.rpc('rpc_upsert_progress', {
+    p_user_id,           // <-- OBLIGATORIO: así se llama el parámetro en el RPC
     p_item_id: itemId,
-    p_completed: !!completed,
+    p_completed: !!completed
   });
+
   if (error) {
-    console.error('upsert_progress error →', error);
+    console.error('rpc_upsert_progress error', error);
     throw error;
   }
+  return data;
 }
+
 
 
 // =====================
@@ -295,19 +304,34 @@ function renderChecklist(rows){
       row.className = 'item';
 
       const cb = document.createElement('input');
+      const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
-      cb.addEventListener('change', async ()=>{
-        try{
-          await upsertProgress(it.item_id, cb.checked);   // ← solo item_id y el estado
-          await loadDashboard(); 
-          const newDone = cb.checked ? done+1 : done-1;
+
+      cb.addEventListener('change', async () => {
+        const prev = it.done;
+        cb.disabled = true;
+        try {
+          await upsertProgress(it.item_id, cb.checked);
+
+          // Actualiza el estado del ítem en memoria
+          it.done = cb.checked;
+
+          // Recalcula hechos en esa categoría
+          const newDone = bucket.items.filter(x => x.done).length;
           chip.textContent = `${newDone}/${bucket.items.length} hechos`;
-        }catch(e){
-         console.error(e);
-         cb.checked = !cb.checked;
-        }
-      });
+
+          // Refresca gráficas del dashboard
+           await loadDashboard();
+         } catch (e) {
+           console.error(e);
+           // Revertir la UI si falló
+           cb.checked = prev;
+         } finally {
+           cb.disabled = false;
+         }
+       });
+
 
 
     const title = document.createElement('div');
