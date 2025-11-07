@@ -160,16 +160,17 @@ async function fetchChecklistData(){
 }
 
 
-// Reemplaza TODO este bloque por este:
-
+// Guarda/actualiza el progreso de un ítem
 async function upsertProgress(itemId, completed) {
-  // Obtén el user_id activo (o el FALLBACK si no hay sesión)
+  // user id activo o fallback
   const p_user_id = await getActiveUserId();
 
-  // Llama al RPC con los nombres de argumentos correctos
+  // MUY IMPORTANTE: asegurar que p_item_id es BIGINT (número)
+  const p_item_id = Number(itemId);
+
   const { data, error } = await sb.rpc('rpc_upsert_progress', {
-    p_user_id,           // <-- OBLIGATORIO: así se llama el parámetro en el RPC
-    p_item_id: itemId,
+    p_user_id,              // así se llama el parámetro en el RPC
+    p_item_id,              // enviar como número
     p_completed: !!completed
   });
 
@@ -179,6 +180,7 @@ async function upsertProgress(itemId, completed) {
   }
   return data;
 }
+
 
 
 
@@ -303,7 +305,6 @@ function renderChecklist(rows){
       const row = document.createElement('label');
       row.className = 'item';
 
-      const cb = document.createElement('input');
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
