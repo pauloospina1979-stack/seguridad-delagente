@@ -163,7 +163,6 @@ async function fetchChecklistData(){
 async function upsertProgress(itemId, completed){
   // Llama al RPC correcto y con los nombres exactos de parámetros
   const { error } = await sb.rpc('upsert_progress', {
-    p_user_id: uid,
     p_item_id: itemId,
     p_completed: !!completed,
   });
