@@ -150,21 +150,15 @@ async function fetchGlobalProgress(){
 }
 
 async function fetchChecklistData(){
-  // Si creaste una vista `items_by_category` visible por anon key:
-  // columnas esperadas: category_id, category_name, item_id, item_label, done (bool)
   const uid = await getActiveUserId();
-  const { data, error } = await sb
-    .from('items_by_category')
-    .select('*')
-    .eq('user_id', uid)
-    .order('category_order', {ascending:true})
-    .order('item_order', {ascending:true});
+  const { data, error } = await sb.rpc('rpc_items_by_category', { uid });
   if (error){
-    console.warn('items_by_category no disponible o sin permisos, usando fallback.', error.message);
+    console.warn('rpc_items_by_category error', error.message);
     return [];
   }
-  return data;
+  return data || [];
 }
+
 
 async function upsertProgress(itemId, completed){
   // Llama al RPC correcto y con los nombres exactos de parámetros
