@@ -316,12 +316,25 @@ function renderChecklist(rows){
       });
 
 
-      const span = document.createElement('span');
-      span.textContent = it.item_label || `Ítem ${it.item_id}`;
+    const title = document.createElement('div');
+    title.className = 'item-title';
+    title.textContent = it.item_label || `Ítem ${it.item_id}`;
 
-      row.appendChild(cb);
-      row.appendChild(span);
-      list.appendChild(row);
+    const badge = document.createElement('small');
+    badge.className = 'chip';
+    badge.textContent = (it.item_level || '').toString(); // Essential/Optional/Advanced
+    badge.style.marginLeft = '8px';
+
+    const detail = document.createElement('div');
+    detail.className = 'item-detail';
+    detail.textContent = it.item_detail || '';
+
+    row.appendChild(cb);
+    row.appendChild(title);
+    row.appendChild(badge);
+    row.appendChild(detail);
+    list.appendChild(row);
+
     }
 
     wrap.appendChild(list);
