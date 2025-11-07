@@ -166,20 +166,18 @@ async function fetchChecklistData(){
   return data;
 }
 
-async function upsertProgress(itemId, categoryId, completed){
-  const uid = await getActiveUserId();
-  // si expusiste un RPC upsert: rpc_upsert_progress(user_id uuid, item_id bigint, completed bool)
-  const { data, error } = await sb.rpc('rpc_upsert_progress', {
-    user_id: uid,
+async function upsertProgress(itemId, completed){
+  // Llama al RPC correcto y con los nombres exactos de parámetros
+  const { error } = await sb.rpc('upsert_progress', {
     p_item_id: itemId,
-    p_completed: !!completed
+    p_completed: !!completed,
   });
-  if (error){
-    console.error('rpc_upsert_progress error', error);
-    // alternativa: escribir directo en public.progress (si RLS lo permite)
+  if (error) {
+    console.error('upsert_progress error →', error);
+    throw error;
   }
-  return data;
 }
+
 
 // =====================
 // 6) RENDER GRÁFICAS
@@ -307,17 +305,16 @@ function renderChecklist(rows){
       cb.checked = !!it.done;
       cb.addEventListener('change', async ()=>{
         try{
-          await upsertProgress(it.item_id, it.category_id, cb.checked);
-          // refrescar contadores
+          await upsertProgress(it.item_id, cb.checked);   // ← solo item_id y el estado
           await loadDashboard(); 
-          // actualizar chip rápido
           const newDone = cb.checked ? done+1 : done-1;
           chip.textContent = `${newDone}/${bucket.items.length} hechos`;
         }catch(e){
-          console.error(e);
-          cb.checked = !cb.checked; // revertir en caso de error
+         console.error(e);
+         cb.checked = !cb.checked;
         }
       });
+
 
       const span = document.createElement('span');
       span.textContent = it.item_label || `Ítem ${it.item_id}`;
