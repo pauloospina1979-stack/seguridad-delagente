@@ -182,6 +182,13 @@ async function upsertProgress(itemId, completed) {
 }
 
 
+function colorFor(p) {
+  const v = Number(p) || 0;
+  if (v >= 90) return '#10b981'; // verde
+  if (v >= 60) return '#22d3ee'; // cian
+  if (v >= 30) return '#f59e0b'; // naranja
+  return '#ef4444';              // rojo
+}
 
 
 // =====================
@@ -218,14 +225,18 @@ function renderCategoryCharts(rows){
   // rows: [{category,label,percent,...}]
   const labels = rows.map(r=> r.label ?? r.category ?? 'Cat');
   const values = rows.map(r=> Math.round(r.percent ?? 0));
-
+  const colors = values.map(colorFor);
   ensureCharts();
   barChart.data.labels = labels;
   barChart.data.datasets[0].data = values;
+  barChart.data.datasets[0].backgroundColor = colors;
   barChart.update();
 
   radarChart.data.labels = labels;
   radarChart.data.datasets[0].data = values;
+  radarChart.data.datasets[0].pointBackgroundColor = colors;
+  radarChart.data.datasets[0].borderColor = '#22d3ee';
+  radarChart.data.datasets[0].backgroundColor = 'rgba(34,211,238,0.12)'; 
   radarChart.update();
 
   // clic en barra -> ir a checklist y hacer scroll a la categoría

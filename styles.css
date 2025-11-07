@@ -6,6 +6,14 @@
   --card:#f7f7f7;
   --radius:14px;
 }
+:root[data-theme="light"] {
+  --text: #111827;    /* gris-900 */
+  --border: #e5e7eb;  /* gris-200 */
+}
+:root[data-theme="dark"] {
+  --text: #e5e7eb;    /* gris-200 */
+  --border: #374151;  /* gris-700 */
+}
 *{box-sizing:border-box}
 body{margin:0;font:16px/1.5 system-ui,Segoe UI,Roboto,Inter;color:var(--text);background:var(--bg)}
 .topbar{display:flex;gap:16px;align-items:center;padding:12px 20px;border-bottom:1px solid #e7e7e7;background:#fff;position:sticky;top:0;z-index:10}
