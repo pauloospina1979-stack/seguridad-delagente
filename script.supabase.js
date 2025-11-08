@@ -144,7 +144,7 @@ async function fetchCategoryProgress(){
 async function fetchGlobalProgress(){
   const uid = await getActiveUserId();
   console.log('Consultando progreso global...');
-  const { data, error } = await sb.rpc('rpc_global_progress', { user_id: uid });
+  const { data, error } = await sb.rpc('rpc_global_progress', { p_user_id: uid });
   if (error){ console.error('rpc_global_progress error', error); throw error; }
   return data; // { total_done, total_items, percent }
 }
