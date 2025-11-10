@@ -1,178 +1,155 @@
-<!doctype html>
-<html lang="es">
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Seguridad Delagente</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#0f172a;
-      --muted:#94a3b8;
-      --text:#e2e8f0;
-      --title:#ffffff;
+      --bg: #0b1220;
+      --card: #0f172a;
+      --soft: #111827;
+      --text: #e5e7eb;
+      --muted:#9ca3af;
       --accent:#22c55e;
-      --chip:#e2e8f0;
-      --border:#1f2a44;
-      --pill:#e2e8f0;
-      --kpi:#f8fafc;
+      --accent-2:#0ea5e9;
+      --border:#1f2937;
+      --danger:#ef4444;
     }
     [data-theme="light"]{
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --muted:#475569;
+      --bg:#f6f7fb;
+      --card:#fff;
+      --soft:#f1f5f9;
       --text:#0f172a;
-      --title:#0b1220;
-      --accent:#10b981;
-      --chip:#0f172a;
-      --border:#e2e8f0;
-      --pill:#075985;
-      --kpi:#0b1220;
+      --muted:#475569;
+      --border:#e5e7eb;
+      --accent:#22c55e;
+      --accent-2:#2563eb;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
-      background:var(--bg); color:var(--text);
-    }
-    header{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px; position:sticky; top:0; z-index:20;
-      background:var(--bg); border-bottom:1px solid var(--border);
-    }
-    .brand{display:flex; gap:12px; align-items:center}
-    .brand img{height:38px}
-    .brand h1{font-size:22px; margin:0; color:var(--title)}
-    nav{display:flex; gap:10px}
-    .btn{padding:10px 14px; border:1px solid var(--border); background:var(--card); color:var(--text);
-      border-radius:10px; cursor:pointer}
-    .btn.primary{background:var(--accent); color:#00281b; border-color:transparent; font-weight:700}
+    html,body{margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; color:var(--text); background:var(--bg)}
+    header{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+    header h1{font-size:20px;margin:0; font-weight:700}
+    .nav{margin-left:auto; display:flex; gap:10px}
+    .btn{border:1px solid var(--border);background:var(--soft);color:var(--text);padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:600}
     .btn.ghost{background:transparent}
-    .btn.active{outline:2px solid var(--accent)}
-    main{max-width:1200px; margin:24px auto; padding:0 16px}
-    .grid{display:grid; gap:16px}
-    .grid-3{grid-template-columns: 1.1fr 1fr 1fr}
-    @media (max-width:1000px){ .grid-3{grid-template-columns:1fr} }
-    .card{
-      background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px;
-      box-shadow: 0 10px 28px rgba(0,0,0,.2)
-    }
-    h2{margin:0 0 12px; color:var(--title); font-size:26px}
-    .muted{color:var(--muted)}
-    .pill{display:inline-block; padding:6px 10px; border-radius:999px; background:#eafaf5; color:#065f46; font-weight:700; border:1px solid #bbf7d0}
-    .kpis{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px}
-    .kpi{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px}
-    .kpi .num{font-size:28px; font-weight:800; color:var(--kpi)}
-    .kpi .lbl{color:var(--muted); margin-top:6px}
-    .charts{display:grid; grid-template-columns:1fr 1fr; gap:16px}
-    @media (max-width:1000px){ .charts{grid-template-columns:1fr} }
-    .barWrap{height:420px}
-    .radarWrap{height:420px}
-    .progressBar{width:100%; height:12px; border-radius:999px; background:#0a162d; border:1px solid var(--border); overflow:hidden}
-    .progressBar > div{height:100%; background:var(--accent); width:0%}
-    .tabs{display:flex; gap:10px; margin-bottom:18px}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#06110a}
+    .container{max-width:1200px;margin:24px auto;padding:0 16px}
+
+    /* Tarjetas */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+    .grid{display:grid;gap:16px}
+    .grid-2{grid-template-columns:1fr}
+    @media(min-width:1100px){ .grid-3{grid-template-columns:1.2fr 1fr 1.2fr} .grid-2{grid-template-columns:1fr 1fr} }
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;margin-bottom:16px}
+    .tabbtn{border:1px solid var(--border);background:var(--soft);padding:8px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+    .tabbtn.active{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
     .hidden{display:none !important}
-    .cat{border:1px solid var(--border); border-radius:14px; padding:14px; background:var(--card)}
-    .catHead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
-    .chip{background:rgba(34,197,94,.1); color:#34d399; border:1px solid #065f46; padding:6px 10px; border-radius:999px; font-weight:700}
-    .list{display:flex; flex-direction:column; gap:12px}
-    .item{display:flex; align-items:start; gap:10px}
+    .muted{color:var(--muted);}
+
+    /* Checklist */
+    .catCard{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-bottom:20px}
+    .catHead{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+    .catTitle{font-size:20px;font-weight:800;margin:0}
+    .chip{background:var(--soft);border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-weight:600;color:var(--muted)}
+    .list{padding:8px 8px 16px}
+    .itemRow{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(180deg, var(--soft), transparent 60%);margin:10px}
+    .itemTitle{margin:0; font-weight:700;font-size:16px}
+    .badge{border-radius:999px;padding:2px 10px;border:1px solid var(--border);font-size:12px;font-weight:700;display:inline-block;margin-left:10px}
+    .badge.essential{background:#10b98122;color:#059669;border-color:#10b98155}
+    .badge.optional{background:#60a5fa22;color:#2563eb;border-color:#60a5fa55}
+    .badge.advanced{background:#f472b622;color:#be185d;border-color:#f472b655}
+    .itemDesc{margin:4px 0 0 0;color:var(--muted);line-height:1.4}
+    .rowTop{display:flex;align-items:center;gap:10px}
+    .rowLeft{display:flex;align-items:flex-start;gap:12px}
+    .rowRight{display:block}
+    input[type="checkbox"]{width:20px;height:20px;cursor:pointer}
+
+    /* Global progress */
+    .progressWrap{height:10px;background:var(--soft);border:1px solid var(--border);border-radius:999px;overflow:hidden}
+    .progressBar{height:100%;background:var(--accent);width:0%}
+    .kpi{background:var(--card);border:1px solid var(--border);padding:16px;border-radius:16px;text-align:center}
+    .kpi span{display:block;color:var(--muted)}
+    .kpi strong{font-size:28px}
+
+    canvas{max-width:100%}
   </style>
-
-  <!-- Chart.js y Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
-<!-- IMPORTANTE: el data-theme vive en <body> -->
-<body data-theme="light">
+<body>
   <header>
-    <div class="brand">
-      <img src="./img/logo-comfenalco.png" alt="Logo" />
-      <h1>Seguridad Delagente</h1>
-    </div>
-    <nav>
+    <img src="./img/logo-comfenalco.png" alt="Logo" style="height:36px">
+    <h1>Seguridad Delagente</h1>
+    <div class="nav">
       <button id="btnTheme" class="btn ghost">Tema</button>
-      <button id="btnDashTop" class="btn">Dashboard</button>
-      <button id="btnCheckTop" class="btn">Checklist</button>
-      <button id="btnLogin" class="btn primary">Iniciar sesión</button>
-      <button id="btnLogout" class="btn" style="display:none">Cerrar sesión</button>
-    </nav>
+      <button id="btnDashTop" class="btn ghost">Dashboard</button>
+      <button id="btnCheckTop" class="btn ghost">Checklist</button>
+      <button id="btnLogin" class="btn">Iniciar sesión</button>
+      <button id="btnLogout" class="btn ghost hidden">Cerrar sesión</button>
+    </div>
   </header>
 
-  <main>
+  <main class="container">
+    <div class="tabs">
+      <button class="tabbtn active" data-tab="tab-dashboard">Dashboard</button>
+      <button class="tabbtn" data-tab="tab-checklist">Checklist</button>
+    </div>
+
     <!-- DASHBOARD -->
-    <div id="tab-dashboard" class="grid grid-3">
-      <section class="card">
-        <span class="pill">Gobierno de Información</span>
-        <h2 style="margin-top:10px">Seguridad Delagente</h2>
-        <p class="muted" style="line-height:1.6">
-          Seguridad Delagente es una Evaluación de Ciberseguridad gratuita promovida por el área de Gobierno de Información.
-          Su propósito es proporcionar conocimiento en temas de ciberseguridad para todos los colaboradores de la corporación.
-          Seguridad Delagente está dirigida tanto a aquellos que no tienen experiencia previa como a aquellos que ya cuentan con
-          conocimientos en la materia.
-        </p>
+    <section id="tab-dashboard">
+      <div class="grid grid-3">
+        <div class="card">
+          <span class="chip">Gobierno de Información</span>
+          <h2 style="margin:10px 0 6px 0">Seguridad Delagente</h2>
+          <p class="muted">
+            Seguridad Delagente es una Evaluación de Ciberseguridad gratuita promovida por el área de Gobierno de Información.
+            Su propósito es proporcionar conocimiento en temas de ciberseguridad para todos los colaboradores de la corporación.
+            Está dirigida tanto a quienes no tienen experiencia previa como a quienes ya cuentan con conocimientos.
+          </p>
 
-        <div class="kpis">
-          <div class="kpi"><div class="num" id="kpiEssential">0%</div><div class="lbl">Esencial</div></div>
-          <div class="kpi"><div class="num" id="kpiOptional">0%</div><div class="lbl">Opcional</div></div>
-          <div class="kpi"><div class="num" id="kpiAdvanced">0%</div><div class="lbl">Avanzado</div></div>
-        </div>
-
-        <div style="margin-top:18px">
-          <h3 style="margin:0 0 8px">Progreso global</h3>
-          <div class="progressBar"><div id="globalBar"></div></div>
-          <div style="margin-top:8px; display:flex; gap:16px; color:var(--muted)">
-            <div><strong id="globalPct">0%</strong> Completado</div>
-            <div>(<span id="globalCount">0</span> / <span id="globalTotal">0</span> ítems)</div>
+          <div class="grid grid-2" style="margin-top:12px">
+            <div class="kpi"><strong id="kpiEss">0%</strong><span>Esencial</span></div>
+            <div class="kpi"><strong id="kpiOpt">0%</strong><span>Opcional</span></div>
+            <div class="kpi"><strong id="kpiAdv">0%</strong><span>Avanzado</span></div>
           </div>
         </div>
-      </section>
 
-      <section class="card">
-        <h2>Distribución de ítems</h2>
-        <div class="radarWrap"><canvas id="radarChart"></canvas></div>
-      </section>
+        <div class="card">
+          <h3 style="margin-top:0">Distribución de ítems</h3>
+          <canvas id="radarChart" height="280"></canvas>
+        </div>
 
-      <section class="card">
-        <h2>Avance por categoría</h2>
-        <p class="muted" style="margin-top:-6px">Barras horizontales. Haz clic en una categoría para ir al detalle.</p>
-        <div class="barWrap"><canvas id="barChart"></canvas></div>
-      </section>
-    </div>
+        <div class="card">
+          <h3 style="margin-top:0">Avance por categoría</h3>
+          <canvas id="barChart" height="280"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin:0 0 10px 0">Progreso global</h3>
+        <div class="progressWrap"><div id="globalBar" class="progressBar"></div></div>
+        <div class="muted" style="margin-top:8px">
+          <strong id="globalPct">0%</strong> (<span id="globalCount">0</span> / <span id="globalTotal">0</span> ítems)
+        </div>
+      </div>
+    </section>
 
     <!-- CHECKLIST -->
-    <div id="tab-checklist" class="">
-      <div class="tabs">
-        <button class="btn tabbtn active" data-tab="tab-checklist">Checklist</button>
-        <button class="btn tabbtn" data-tab="tab-dashboard">Dashboard</button>
-      </div>
-
-      <section class="card">
-        <h2>Checklist</h2>
+    <section id="tab-checklist" class="hidden">
+      <div class="card">
+        <h2 style="margin:0 0 6px 0">Checklist</h2>
         <p class="muted">Marca los ítems completados. Se guardan por usuario autenticado; sin login se usan los datos del usuario “anónimo”.</p>
-        <div id="checklistContainer" style="display:flex; flex-direction:column; gap:14px"></div>
-      </section>
-    </div>
+      </div>
+      <div id="checklistContainer" style="margin-top:16px"></div>
+    </section>
   </main>
 
-  <!-- Modal login -->
-  <template id="tplLogin">
-    <div style="max-width:520px; margin:8vh auto; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px">
-      <h3 style="margin-top:0">Iniciar sesión por correo</h3>
-      <p class="muted" style="margin-top:-8px">Te enviaremos un enlace mágico (OTP) para entrar.</p>
-      <input id="emailInput" type="email" placeholder="tucorreo@dominio.com"
-             style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text)">
-      <div style="display:flex; gap:8px; margin-top:12px">
-        <button id="sendLink" class="btn primary">Enviar enlace</button>
-        <button id="closeLogin" class="btn">Cancelar</button>
-      </div>
-      <div id="loginMsg" class="muted" style="margin-top:8px"></div>
-    </div>
-  </template>
-
+  <!-- Charts, Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./script.supabase.js"></script>
 </body>
 </html>
