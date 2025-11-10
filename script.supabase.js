@@ -137,7 +137,7 @@ async function fetchGlobalProgress() {
 async function fetchChecklistRows() {
   const uid = await getActiveUserId();
   let { data, error } = await sb
-    .from('items_by_category')
+    .from('items_by_category_v2')
     .select('*')
     .or(`user_id.eq.${uid},user_id.is.null`)
     .order('category_order', { ascending: true })
@@ -146,7 +146,7 @@ async function fetchChecklistRows() {
   if (error) {
     console.warn('items_by_category fallback:', error.message);
     const res2 = await sb
-      .from('items_by_category')
+      .from('items_by_category_v2')
       .select('*')
       .or(`user_id.eq.${uid},user_id.is.null`);
     data = res2.data || [];
@@ -264,86 +264,138 @@ function renderLevelKPIs(rows) {
   els.kpiAdvanced.textContent = pc(agg.advanced) + '%';
 }
 
+function sortChecklistRows(rows){
+  return (rows || []).slice().sort((a, b) => {
+    const ca = Number(a.category_order ?? 9999);
+    const cb = Number(b.category_order ?? 9999);
+    if (ca !== cb) return ca - cb;
+    const ia = Number(a.item_order ?? 9999);
+    const ib = Number(b.item_order ?? 9999);
+    return ia - ib;
+  });
+}
+
 // =====================
 // 7) CHECKLIST (con descripción)
 // =====================
-function renderChecklist(rows) {
+function renderChecklist(rows){
+  // Agrupar por categoría
+  const byCat = new Map();
+  for (const r of rows) {
+    const key = r.category_slug || r.category_id || r.category_name || 'categoria';
+    if (!byCat.has(key)) {
+      byCat.set(key, {
+        name: r.category_name || String(key),
+        items: []
+      });
+    }
+    byCat.get(key).items.push(r);
+  }
+
   const root = els.checklistContainer;
   root.innerHTML = '';
-  const map = new Map();
-  for (const r of rows) {
-    const key = r.category_slug || r.category_id || r.category_name || 'cat';
-    if (!map.has(key)) map.set(key, { slug: key, name: r.category_name || String(key), description: r.category_description || '', items: [] });
-    map.get(key).items.push(r);
-  }
-  if (map.size === 0) {
-    const d = document.createElement('div');
-    d.className = 'muted';
-    d.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category" y sus permisos RLS).';
-    root.appendChild(d);
+
+  if (byCat.size === 0){
+    const empty = document.createElement('div');
+    empty.className = 'muted';
+    empty.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category" y sus permisos RLS).';
+    root.appendChild(empty);
     return;
   }
-  for (const [, bucket] of map.entries()) {
+
+  for (const [slug, bucket] of byCat.entries()){
     const wrap = document.createElement('div');
-    wrap.className = 'cat';
-    wrap.id = `cat-${bucket.slug}`;
+    wrap.className = 'card';
+    wrap.id = `cat-${slug}`;
+
     const head = document.createElement('div');
     head.className = 'catHead';
-    const title = document.createElement('h3');
+
+    const title = document.createElement('h4');
     title.textContent = bucket.name;
     title.style.margin = '0';
+
     const chip = document.createElement('div');
     chip.className = 'chip';
-    const done0 = bucket.items.filter(i => i.done).length;
-    chip.textContent = `${done0}/${bucket.items.length} hechos`;
+    const doneCount = bucket.items.filter(i => i.done).length;
+    chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
+
     head.appendChild(title);
     head.appendChild(chip);
     wrap.appendChild(head);
 
-    // 🔹 Mostrar descripción
-    if (bucket.description) {
-      const desc = document.createElement('p');
-      desc.className = 'muted';
-      desc.style.margin = '-2px 0 10px 0';
-      desc.textContent = bucket.description;
-      wrap.appendChild(desc);
-    }
-
     const list = document.createElement('div');
     list.className = 'list';
-    for (const it of bucket.items) {
+
+    for (const it of bucket.items){
       const row = document.createElement('label');
       row.className = 'item';
+
+      // 1) Checkbox
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
-      cb.addEventListener('change', async () => {
-        const before = !cb.checked;
-        try {
-          await upsertProgress(it.item_id, cb.checked);
+
+      cb.addEventListener('change', async ()=>{
+        const before = cb.checked;
+        try{
+          await upsertProgress(it.item_id, it.category_id, cb.checked);
+          // refrescar dashboard
           await loadDashboard();
-          const newDone = cb.checked ? done0 + 1 : done0 - 1;
+          // actualizar el chip de esta categoría
+          const newDone = before ? (doneCount + 1) : (doneCount - 1);
           chip.textContent = `${newDone}/${bucket.items.length} hechos`;
-        } catch (e) {
+        }catch(e){
           console.error(e);
-          cb.checked = before;
+          cb.checked = !before; // revertir
         }
       });
-      const span = document.createElement('span');
-      span.textContent = it.item_label || `Ítem ${it.item_id}`;
-      const lvl = document.createElement('span');
-      lvl.textContent = (it.item_level || 'essential');
-      lvl.className = 'pill';
-      lvl.style.marginLeft = '10px';
+
+      // 2) Contenedor de texto
+      const textWrap = document.createElement('div');
+      textWrap.className = 'itemText';
+
+      // 2.1 Título del ítem
+      const spanTitle = document.createElement('span');
+      spanTitle.className = 'itemTitle';
+      spanTitle.textContent = it.item_label || it.title || `Ítem ${it.item_id}`;
+
+      // 2.2 ETIQUETA de nivel (essential/optional/advanced)
+      const level = (it.item_level || it.level || it.difficulty || '').toString().toLowerCase();
+      const badge = document.createElement('span');
+      badge.className = `badge ${level || 'neutral'}`;
+      badge.textContent = level || 'nivel';
+
+      // 2.3 **DESCRIPCIÓN** (tomamos el primer campo que exista)
+      const descText =
+        it.item_description ??
+        it.description ??
+        it.item_detail ??
+        it.details ??
+        '';
+
+      // Creamos el nodo de descripción solo si hay texto
+      let descEl = null;
+      if (descText && String(descText).trim() !== '') {
+        descEl = document.createElement('div');
+        descEl.className = 'itemDesc';
+        descEl.textContent = String(descText).trim();
+      }
+
+      textWrap.appendChild(spanTitle);
+      textWrap.appendChild(badge);
+      if (descEl) textWrap.appendChild(descEl);
+
       row.appendChild(cb);
-      row.appendChild(span);
-      row.appendChild(lvl);
+      row.appendChild(textWrap);
       list.appendChild(row);
     }
+
     wrap.appendChild(list);
     root.appendChild(wrap);
   }
 }
+
 
 // =====================
 // 8) LOADERS
@@ -354,10 +406,17 @@ async function loadDashboard() {
   renderGlobal(global);
   renderLevelKPIs(rows);
 }
-async function loadChecklist() {
-  const rows = await fetchChecklistRows();
-  renderChecklist(rows);
+async function loadChecklist(){
+  try{
+    const rows = await fetchChecklistData();
+    const sorted = sortChecklistRows(rows);  // << ordena con fallback
+    renderChecklist(sorted);
+  }catch(e){
+    console.error('Error cargando checklist', e);
+    els.checklistContainer.innerHTML = `<div class="muted">Error al cargar checklist: ${e.message||e}</div>`;
+  }
 }
+
 async function loadAll() {
   await refreshUserUI();
   await loadDashboard();
