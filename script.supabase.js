@@ -1,16 +1,12 @@
 // =====================
 // 1) CONFIG SUPABASE
 // =====================
-const SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";   // <-- Pega tu URL
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";                      // <-- Pega tu anon key
-// UUID de usuario “anónimo” que creaste en tabla public.users
+const SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";
 const FALLBACK_USER_ID = "6abafec6-cf31-47a0-96e8-18b3cb08c0f0";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  }
+  auth: { persistSession: true, autoRefreshToken: true }
 });
 
 // helpers
@@ -24,17 +20,23 @@ const els = {
   btnLogin: $('#btnLogin'),
   btnLogout: $('#btnLogout'),
 
-    tabBtns: $all('.tabbtn'),
-    tabDash: $('#tab-dashboard'),
-    tabCheck: $('#tab-checklist'),
+  tabDash: $('#tab-dashboard'),
+  tabCheck: $('#tab-checklist'),
 
-    barCanvas: $('#barChart'),
-    radarCanvas: $('#radarChart'),
-    globalBar: $('#globalBar'),
-    globalPct: $('#globalPct'),
-    globalCount: $('#globalCount'),
-    globalTotal: $('#globalTotal'),
-    checklistContainer: $('#checklistContainer'),
+  barCanvas: $('#barChart'),
+  radarCanvas: $('#radarChart'),
+
+  globalBar: $('#globalBar'),
+  globalPct: $('#globalPct'),
+  globalCount: $('#globalCount'),
+  globalTotal: $('#globalTotal'),
+
+  statEss: $('#statEss'),
+  statOpt: $('#statOpt'),
+  statAdv: $('#statAdv'),
+
+  categoryCards: $('#categoryCards'),
+  checklistContainer: $('#checklistContainer'),
 };
 
 let barChart, radarChart;
@@ -45,8 +47,7 @@ let currentUser = null;
 // =====================
 function toggleTheme(){
   const root = document.documentElement;
-  const cur = root.getAttribute('data-theme') || 'dark';
-  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  root.setAttribute('data-theme', (root.getAttribute('data-theme') === 'dark') ? 'light' : 'dark');
 }
 els.btnTheme.addEventListener('click', toggleTheme);
 
@@ -54,32 +55,27 @@ els.btnTheme.addEventListener('click', toggleTheme);
 // 3) NAV / TABS
 // =====================
 function showTab(id){
-  [els.tabDash, els.tabCheck].forEach(x => x.classList.add('hidden'));
-  $all('.tabbtn').forEach(b=>b.classList.remove('active'));
-  $('#'+id).classList.remove('hidden');
-  $(`.tabbtn[data-tab="${id}"]`).classList.add('active');
+  els.tabDash.classList.add('hidden');
+  els.tabCheck.classList.add('hidden');
+  if (id === 'tab-dashboard') els.tabDash.classList.remove('hidden');
+  if (id === 'tab-checklist') els.tabCheck.classList.remove('hidden');
 }
-$all('.tabbtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    showTab(btn.dataset.tab);
-  });
-});
-els.btnDashTop.addEventListener('click', ()=>showTab('tab-dashboard'));
-els.btnCheckTop.addEventListener('click', ()=>showTab('tab-checklist'));
+els.btnDashTop.onclick = ()=>showTab('tab-dashboard');
+els.btnCheckTop.onclick = ()=>showTab('tab-checklist');
 
 // =====================
-// 4) AUTH (OTP POR EMAIL)
+// 4) AUTH (OTP email)
 // =====================
 async function refreshUserUI(){
   const { data } = await sb.auth.getUser();
   currentUser = data?.user ?? null;
 
   if (currentUser){
-    els.btnLogin.classList.add('hidden');
-    els.btnLogout.classList.remove('hidden');
+    els.btnLogin.style.display = 'none';
+    els.btnLogout.style.display = '';
   } else {
-    els.btnLogin.classList.remove('hidden');
-    els.btnLogout.classList.add('hidden');
+    els.btnLogin.style.display = '';
+    els.btnLogout.style.display = 'none';
   }
 }
 
@@ -118,128 +114,121 @@ els.btnLogin.addEventListener('click', openLoginModal);
 els.btnLogout.addEventListener('click', async ()=>{
   await sb.auth.signOut();
   await refreshUserUI();
-  // recargar datos para el usuario anónimo
   await loadAll();
 });
 
-// =====================
-// 5) LLAMADAS RPC
-//    rpc_category_progress(user_id UUID) -> rows: {category, label, percent, count_done, count_total}
-//    rpc_global_progress(user_id UUID) -> { total_done, total_items, percent }
-// =====================
 async function getActiveUserId(){
   const { data } = await sb.auth.getUser();
-  const uid = data?.user?.id || FALLBACK_USER_ID;
-  return uid;
+  return data?.user?.id || FALLBACK_USER_ID;
 }
 
+// =====================
+// 5) DATA / RPC
+// =====================
 async function fetchCategoryProgress(){
   const uid = await getActiveUserId();
-  console.log('Consultando progreso por categoría...');
   const { data, error } = await sb.rpc('rpc_category_progress', { user_id: uid });
-  if (error){ console.error('rpc_category_progress error', error); throw error; }
+  if (error){ console.error('rpc_category_progress', error); return []; }
   return data || [];
 }
-
 async function fetchGlobalProgress(){
   const uid = await getActiveUserId();
-  console.log('Consultando progreso global...');
-  const { data, error } = await sb.rpc('rpc_global_progress', { p_user_id: uid });
-  if (error){ console.error('rpc_global_progress error', error); throw error; }
-  return data; // { total_done, total_items, percent }
+  const { data, error } = await sb.rpc('rpc_global_progress', { user_id: uid });
+  if (error){ console.error('rpc_global_progress', error); return { total_done:0,total_items:0,percent:0 }; }
+  return data || { total_done:0,total_items:0,percent:0 };
 }
-
+async function fetchCategories(){
+  // para tarjetas (nombre/desc). Si RLS no permite, devolvemos vacío.
+  const { data, error } = await sb.from('categories').select('id,slug,name,description,order').order('order', {ascending:true}).order('name', {ascending:true});
+  if (error){ console.warn('categories no accesible', error.message); return []; }
+  return data || [];
+}
 async function fetchChecklistData(){
   const uid = await getActiveUserId();
-  const { data, error } = await sb.rpc('rpc_items_by_category', { uid });
+  // vista recomendada (si no, devolvemos vacío)
+  const { data, error } = await sb
+    .from('items_by_category')
+    .select('*')
+    .eq('user_id', uid)
+    .order('category_order', {ascending:true})
+    .order('item_order', {ascending:true});
   if (error){
-    console.warn('rpc_items_by_category error', error.message);
+    console.warn('items_by_category no disponible o sin permisos, usando fallback.', error.message);
     return [];
   }
   return data || [];
 }
-
-
-// Guarda/actualiza el progreso de un ítem
-async function upsertProgress(itemId, completed) {
-  // user id activo o fallback
-  const p_user_id = await getActiveUserId();
-
-  // MUY IMPORTANTE: asegurar que p_item_id es BIGINT (número)
-  const p_item_id = Number(itemId);
-
-  const { data, error } = await sb.rpc('rpc_upsert_progress', {
-    p_user_id,              // así se llama el parámetro en el RPC
-    p_item_id,              // enviar como número
+async function upsertProgress(itemId, completed){
+  const uid = await getActiveUserId();
+  // RPC con firma: (user_id uuid, p_item_id bigint, p_completed bool)
+  const { error } = await sb.rpc('rpc_upsert_progress', {
+    user_id: uid,
+    p_item_id: itemId,
     p_completed: !!completed
   });
-
-  if (error) {
-    console.error('rpc_upsert_progress error', error);
-    throw error;
-  }
-  return data;
+  if (error) throw error;
 }
-
-
-function colorFor(p) {
-  const v = Number(p) || 0;
-  if (v >= 90) return '#10b981'; // verde
-  if (v >= 60) return '#22d3ee'; // cian
-  if (v >= 30) return '#f59e0b'; // naranja
-  return '#ef4444';              // rojo
-}
-
 
 // =====================
-// 6) RENDER GRÁFICAS
+// 6) CHARTS + COLORES
 // =====================
 function ensureCharts(){
   if (!barChart){
     barChart = new Chart(els.barCanvas, {
       type: 'bar',
-      data: { labels: [], datasets: [{ label:'Avance', data:[], borderRadius:6, backgroundColor:'#27c093' }]},
+      data: { labels: [], datasets: [{ label:'Avance', data:[], borderRadius:6 } ]},
       options: {
         indexAxis: 'y',
         responsive:true,
-        plugins:{ legend:{ display:false }, tooltip:{enabled:true}},
-        scales:{ x:{ beginAtZero:true, max:100, ticks:{color:'var(--text)'}},
-                 y:{ ticks:{color:'var(--text)'}} }
+        plugins:{ legend:{ display:false }},
+        scales:{
+          x:{ beginAtZero:true, max:100, ticks:{color:'var(--muted)'}, grid:{color:'var(--border)'}},
+          y:{ ticks:{color:'var(--text)'}, grid:{color:'var(--border)'} }
+        }
       }
     });
   }
   if (!radarChart){
     radarChart = new Chart(els.radarCanvas, {
       type: 'radar',
-      data: { labels: [], datasets:[{ label:'Avance %', data:[], fill:true, backgroundColor:'rgba(39,192,147,.25)', borderColor:'#27c093', pointBackgroundColor:'#27c093'}]},
+      data: { labels: [], datasets:[{ label:'% Avance', data:[], fill:true, pointRadius:3 }]},
       options: {
-        responsive:true,
-        scales:{ r:{ angleLines:{color:'var(--border)'}, grid:{color:'var(--border)'}, pointLabels:{color:'var(--text)'}, ticks:{display:false, max:100} } },
-        plugins:{ legend:{ display:false }}
+        responsive:true, plugins:{ legend:{ display:false }},
+        scales:{ r:{
+          angleLines:{color:'var(--border)'}, grid:{color:'var(--border)'},
+          pointLabels:{color:'var(--muted)'}, ticks:{display:false, max:100}
+        }}
       }
     });
   }
 }
-
+function colorFor(p){
+  if (p >= 66) return '#27c093';      // alto
+  if (p >= 33) return '#e3b341';      // medio
+  return '#e07166';                   // bajo
+}
 function renderCategoryCharts(rows){
-  // rows: [{category,label,percent,...}]
+  ensureCharts();
+
   const labels = rows.map(r=> r.label ?? r.category ?? 'Cat');
   const values = rows.map(r=> Math.round(r.percent ?? 0));
   const colors = values.map(colorFor);
-  ensureCharts();
+
+  // barras
   barChart.data.labels = labels;
   barChart.data.datasets[0].data = values;
   barChart.data.datasets[0].backgroundColor = colors;
   barChart.update();
 
+  // radar
   radarChart.data.labels = labels;
   radarChart.data.datasets[0].data = values;
+  radarChart.data.datasets[0].backgroundColor = 'rgba(39,192,147,0.18)';
+  radarChart.data.datasets[0].borderColor = '#27c093';
   radarChart.data.datasets[0].pointBackgroundColor = colors;
-  radarChart.data.datasets[0].borderColor = '#22d3ee';
-  radarChart.data.datasets[0].backgroundColor = 'rgba(34,211,238,0.12)'; 
   radarChart.update();
 
-  // clic en barra -> ir a checklist y hacer scroll a la categoría
+  // click en barra -> ir a categoría del checklist
   els.barCanvas.onclick = (evt)=>{
     const points = barChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
     if(!points?.length) return;
@@ -252,9 +241,7 @@ function renderCategoryCharts(rows){
     }
   };
 }
-
 function renderGlobalSummary(summary){
-  // summary: { percent, total_done, total_items }
   const pct = Math.round(summary?.percent ?? 0);
   const done = summary?.total_done ?? 0;
   const total = summary?.total_items ?? 0;
@@ -266,10 +253,54 @@ function renderGlobalSummary(summary){
 }
 
 // =====================
-// 7) RENDER CHECKLIST
+// 7) TARJETAS DE CATEGORÍAS
+// =====================
+function renderCategoryCards(categories, progressRows){
+  const byId = new Map(progressRows.map(r => [String(r.category), r]));
+  els.categoryCards.innerHTML = '';
+  for (const c of categories){
+    const p = byId.get(String(c.id))?.percent ?? 0;
+    const total = byId.get(String(c.id))?.count_total ?? 0;
+    const done = byId.get(String(c.id))?.count_done ?? 0;
+
+    const card = document.createElement('a');
+    card.href = '#';
+    card.className = 'catCard plain';
+    card.onclick = (e)=>{ e.preventDefault(); showTab('tab-checklist'); const t = document.getElementById(`cat-${c.slug||c.id}`); if(t) t.scrollIntoView({behavior:'smooth'}) };
+
+    const top = document.createElement('div');
+    top.className = 'catTop';
+    const title = document.createElement('h4');
+    title.className = 'catTitle';
+    title.textContent = c.name || 'Categoría';
+    const chip = document.createElement('div');
+    chip.className='chip';
+    chip.textContent = `${done}/${total} hechos`;
+    top.appendChild(title); top.appendChild(chip);
+
+    const desc = document.createElement('div');
+    desc.className = 'small';
+    desc.textContent = c.description || '—';
+
+    const bar = document.createElement('div');
+    bar.className = 'catBar';
+    const barFill = document.createElement('i');
+    barFill.style.width = `${Math.round(p)}%`;
+    barFill.style.background = colorFor(p);
+    bar.appendChild(barFill);
+
+    card.appendChild(top);
+    card.appendChild(desc);
+    card.appendChild(bar);
+    els.categoryCards.appendChild(card);
+  }
+}
+
+// =====================
+// 8) CHECKLIST (render + update)
 // =====================
 function renderChecklist(rows){
-  // rows grouped by category
+  // agrupar
   const byCat = new Map();
   for(const r of rows){
     const key = r.category_slug || r.category_id || r.category_name || 'categoria';
@@ -284,8 +315,7 @@ function renderChecklist(rows){
     const empty = document.createElement('div');
     empty.className = 'muted';
     empty.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category" y sus permisos RLS).';
-    root.appendChild(empty);
-    return;
+    root.appendChild(empty); return;
   }
 
   for (const [slug, bucket] of byCat.entries()){
@@ -294,118 +324,80 @@ function renderChecklist(rows){
     wrap.id = `cat-${slug}`;
 
     const head = document.createElement('div');
-    head.className = 'catHead';
-
-    const title = document.createElement('h4');
-    title.textContent = bucket.name;
-    title.style.margin = '0';
-
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    const done = bucket.items.filter(i=>i.done).length;
-    chip.textContent = `${done}/${bucket.items.length} hechos`;
-
-    head.appendChild(title);
-    head.appendChild(chip);
+    head.style.display='flex'; head.style.justifyContent='space-between'; head.style.alignItems='center';
+    const title = document.createElement('h4'); title.textContent = bucket.name; title.style.margin='0';
+    const chip = document.createElement('div'); chip.className='chip';
+    const done0 = bucket.items.filter(i=>i.done).length;
+    chip.textContent = `${done0}/${bucket.items.length} hechos`;
+    head.appendChild(title); head.appendChild(chip);
     wrap.appendChild(head);
 
     const list = document.createElement('div');
-    list.className = 'list';
-
     for (const it of bucket.items){
       const row = document.createElement('label');
-      row.className = 'item';
+      row.style.display='flex'; row.style.gap='10px'; row.style.alignItems='center'; row.style.padding='12px 0'; row.style.borderTop='1px solid var(--border)';
 
       const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!it.done;
+      cb.type='checkbox'; cb.checked=!!it.done;
 
-      cb.addEventListener('change', async () => {
-        const prev = it.done;
-        cb.disabled = true;
-        try {
+      cb.addEventListener('change', async ()=>{
+        const prev = !cb.checked;
+        try{
           await upsertProgress(it.item_id, cb.checked);
+          // refrescar dashboard + checklist + tarjetas + global
+          await loadDashboard();
+          await loadChecklist();
+        }catch(e){
+          console.error('upsert_progress error', e);
+          cb.checked = prev; // revertir
+        }
+      });
 
-          // Actualiza el estado del ítem en memoria
-          it.done = cb.checked;
-
-          // Recalcula hechos en esa categoría
-          const newDone = bucket.items.filter(x => x.done).length;
-          chip.textContent = `${newDone}/${bucket.items.length} hechos`;
-
-          // Refresca gráficas del dashboard
-           await loadDashboard();
-         } catch (e) {
-           console.error(e);
-           // Revertir la UI si falló
-           cb.checked = prev;
-         } finally {
-           cb.disabled = false;
-         }
-       });
-
-
-
-    const title = document.createElement('div');
-    title.className = 'item-title';
-    title.textContent = it.item_label || `Ítem ${it.item_id}`;
-
-    const badge = document.createElement('small');
-    badge.className = 'chip';
-    badge.textContent = (it.item_level || '').toString(); // Essential/Optional/Advanced
-    badge.style.marginLeft = '8px';
-
-    const detail = document.createElement('div');
-    detail.className = 'item-detail';
-    detail.textContent = it.item_detail || '';
-
-    row.appendChild(cb);
-    row.appendChild(title);
-    row.appendChild(badge);
-    row.appendChild(detail);
-    list.appendChild(row);
-
+      const span = document.createElement('span');
+      span.textContent = it.item_label || `Ítem ${it.item_id}`;
+      row.appendChild(cb); row.appendChild(span);
+      list.appendChild(row);
     }
-
     wrap.appendChild(list);
     root.appendChild(wrap);
   }
 }
 
 // =====================
-// 8) CARGA DE DATOS
+// 9) CARGA DE DATOS
 // =====================
 async function loadDashboard(){
-  try{
-    const [catRows, global] = await Promise.all([
-      fetchCategoryProgress().catch(_=>[]),
-      fetchGlobalProgress().catch(_=>({percent:0,total_done:0,total_items:0}))
-    ]);
-    renderCategoryCharts(catRows);
-    renderGlobalSummary(global);
-  }catch(e){
-    console.error('Error cargando dashboard', e);
-  }
+  const [rows, global] = await Promise.all([
+    fetchCategoryProgress(),
+    fetchGlobalProgress()
+  ]);
+  renderCategoryCharts(rows);
+  renderGlobalSummary(global);
+
+  // mini-métricas por nivel (si no tienes level por ahora, dejamos 0)
+  // Si tu vista / RPC entrega por nivel, aquí puedes calcularlo.
+  els.statEss.textContent = `${Math.round(rows.reduce((a,r)=>a+0,0))}%`;
+  els.statOpt.textContent = `0%`;
+  els.statAdv.textContent = `0%`;
+
+  // tarjetas categorías (unimos categorías con % de la RPC)
+  const cats = await fetchCategories();
+  renderCategoryCards(cats, rows);
 }
 
 async function loadChecklist(){
-  try{
-    const rows = await fetchChecklistData();
-    renderChecklist(rows);
-  }catch(e){
-    console.error('Error cargando checklist', e);
-    els.checklistContainer.innerHTML = `<div class="muted">Error al cargar checklist: ${e.message||e}</div>`;
-  }
+  const rows = await fetchChecklistData();
+  renderChecklist(rows);
 }
 
 async function loadAll(){
   await refreshUserUI();
-  await loadDashboard();
-  await loadChecklist();
+  await Promise.all([loadDashboard(), loadChecklist()]);
 }
 
 // =====================
-// 9) INICIO
+// 10) INICIO
 // =====================
 console.log('Iniciando app…');
+showTab('tab-dashboard');
 loadAll();

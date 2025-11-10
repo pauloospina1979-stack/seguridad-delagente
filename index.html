@@ -2,116 +2,217 @@
 <html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Seguridad Delagente</title>
-  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
   <style>
     :root{
-      --bg:#0f141a; --panel:#121821; --muted:#94a3b8; --text:#e6edf3; --accent:#27c093;
-      --card:#0e1624; --border:#253244; --chip:#1f2a3a;
+      --bg:#0f1720;
+      --panel:#131c26;
+      --panel-2:#0f1a22;
+      --text:#e7eef6;
+      --muted:#9fb0c0;
+      --brand:#27c093;
+      --brand-2:#22b17f;
+      --border:#223040;
+      --chip:#213344;
+      --success:#27c093;
+      --warn:#f0c419;
+      --danger:#f28779;
     }
     [data-theme="light"]{
-      --bg:#f6f8fb; --panel:#ffffff; --muted:#445; --text:#0e1624; --accent:#0aa37f;
-      --card:#ffffff; --border:#e6ebf2; --chip:#eef3f8;
+      --bg:#f6f9fc;
+      --panel:#ffffff;
+      --panel-2:#ffffff;
+      --text:#0b1620;
+      --muted:#4a5b6a;
+      --brand:#17a97f;
+      --brand-2:#159b73;
+      --border:#e3e8ee;
+      --chip:#eef3f7;
+      --success:#17a97f;
+      --warn:#f0b21c;
+      --danger:#e46d60;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto,Arial}
-    header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--border);padding:.75rem 1rem;display:flex;align-items:center;gap:1rem}
-    header img{height:36px}
-    header h1{font-size:1.1rem;margin:0;font-weight:700}
-    .grow{flex:1}
-    .btn{background:#223; color:#cfd6df; border:1px solid var(--border); padding:.55rem .9rem; border-radius:10px; cursor:pointer}
-    .btn:hover{filter:brightness(1.1)}
-    .btn.primary{background:var(--accent); color:#06241c; border-color:transparent; font-weight:700}
-    .tabs{display:flex; gap:.5rem; margin:.5rem 0 1rem 0}
-    .tabbtn{padding:.5rem .9rem;border-radius:10px;background:var(--chip);color:var(--text);cursor:pointer;border:1px solid var(--border)}
-    .tabbtn.active{background:var(--accent);color:#06241c}
-    .wrap{max-width:1200px;margin:1rem auto;padding:0 1rem}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1rem; min-height:340px}
-    .card h3{margin:0 0 .25rem 0}
-    .muted{color:var(--muted); font-size:.9rem}
-    .footer{margin:1rem 0; color:var(--muted); text-align:center}
-    .row{display:flex; gap:.75rem; align-items:center; flex-wrap:wrap}
-    .hidden{display:none !important}
-    .progressbar{height:8px;background:var(--chip);border-radius:8px;overflow:hidden}
-    .progressbar > span{display:block;height:100%;background:var(--accent)}
-    .list{display:grid;gap:.5rem;margin-top:.5rem}
-    .item{display:flex;align-items:center;gap:.6rem;padding:.5rem;border-radius:10px;background:var(--panel);border:1px solid var(--border)}
-    .item input{transform:scale(1.2)}
-    .catHead{display:flex;align-items:center;justify-content:space-between;margin:.25rem 0}
-    .chip{background:var(--chip); padding:.15rem .5rem; border-radius:999px; font-size:.8rem}
-    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+    html,body{margin:0;height:100%}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;
+      line-height:1.45;
+    }
+    header{
+      position:sticky;top:0;z-index:40;
+      backdrop-filter:saturate(120%) blur(6px);
+      background:color-mix(in oklab, var(--bg) 76%, transparent);
+      border-bottom:1px solid var(--border);
+    }
+    .nav{
+      max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;
+    }
+    .brand{
+      display:flex;gap:12px;align-items:center;
+    }
+    .brand img{height:34px}
+    .brand h1{font-size:18px;margin:0;font-weight:800}
+    .nav-actions{display:flex;gap:8px;align-items:center}
+    .btn{border:1px solid var(--border);background:var(--panel-2);color:var(--text);padding:8px 14px;border-radius:10px;cursor:pointer}
+    .btn.ghost{background:transparent}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#052115;font-weight:700}
+    .container{max-width:1200px;margin:18px auto;padding:0 16px}
+
+    /* cards & layout */
+    .grid{display:grid;gap:16px}
+    .grid-3{grid-template-columns: 1.1fr 1fr 1.1fr}
+    .grid-2{grid-template-columns: 1fr 1fr}
+    @media (max-width: 1024px){.grid-3{grid-template-columns:1fr}}
+    @media (max-width: 768px){.grid-2{grid-template-columns:1fr}}
+
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .card h3{margin:0 0 10px 0}
+    .muted{color:var(--muted)}
+    .chip{background:var(--chip);padding:4px 10px;border-radius:999px;font-size:12px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+
+    /* hero left */
+    .hero-title{font-size:18px;font-weight:800;margin:0 0 8px 0}
+    .hero-p{margin:0 0 10px 0;color:var(--muted)}
+    .stats3{display:flex;gap:12px}
+    .stat{flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:12px}
+    .stat .val{font-weight:800;font-size:20px}
+    .stat .lbl{color:var(--muted);font-size:13px}
+
+    /* progress compact */
+    .progressWrap{display:flex;align-items:center;gap:10px}
+    .progressTrack{flex:1;height:10px;background:color-mix(in oklab, var(--brand) 18%, transparent);border-radius:999px}
+    .progressBar{height:10px;background:var(--brand);border-radius:999px;width:0}
+    .progressPct{background:var(--chip);padding:4px 10px;border-radius:999px;font-size:12px}
+
+    /* charts */
+    .chartBox{height:360px}
+    canvas{width:100% !important;height:100% !important}
+
+    /* Category cards */
+    .catGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media (max-width: 1024px){.catGrid{grid-template-columns:1fr 1fr}}
+    @media (max-width: 680px){.catGrid{grid-template-columns:1fr}}
+    .catCard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px}
+    .catTop{display:flex;justify-content:space-between;align-items:flex-start}
+    .catTitle{font-weight:800;margin:0}
+    .small{font-size:12px;color:var(--muted)}
+    .catBar{height:8px;background:color-mix(in oklab, var(--brand) 18%, transparent);border-radius:999px;overflow:hidden}
+    .catBar>i{display:block;height:100%;background:var(--brand);width:0}
+    a.plain{color:inherit;text-decoration:none}
+    .hidden{display:none}
   </style>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <!-- Supabase JS -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="./script.supabase.js"></script>
 </head>
 <body>
   <header>
-    <img src="./img/logo-comfenalco.png" alt="Logo" onerror="this.style.visibility='hidden'">
-    <h1>Seguridad Delagente</h1>
-    <div class="grow"></div>
-    <button class="btn" id="btnTheme">Tema</button>
-    <button class="btn" id="btnDashTop">Dashboard</button>
-    <button class="btn" id="btnCheckTop">Checklist</button>
-    <button class="btn primary" id="btnLogin">Iniciar sesión</button>
-    <button class="btn hidden" id="btnLogout">Cerrar sesión</button>
+    <div class="nav">
+      <div class="brand">
+        <img src="./img/logo-comfenalco.png" alt="Logo">
+        <h1>Seguridad Delagente</h1>
+      </div>
+      <div class="nav-actions">
+        <button id="btnTheme" class="btn ghost">Tema</button>
+        <button id="btnDashTop" class="btn primary">Dashboard</button>
+        <button id="btnCheckTop" class="btn">Checklist</button>
+        <button id="btnLogin" class="btn primary">Iniciar sesión</button>
+        <button id="btnLogout" class="btn" style="display:none">Cerrar sesión</button>
+      </div>
+    </div>
   </header>
 
-  <div class="wrap">
+  <main class="container">
+    <!-- TABS -->
     <div class="tabs">
-      <button class="tabbtn active" data-tab="tab-dashboard">Dashboard</button>
-      <button class="tabbtn" data-tab="tab-checklist">Checklist</button>
-    </div>
+      <!-- DASHBOARD -->
+      <section id="tab-dashboard">
+        <!-- HERO: presentación + radar + barras -->
+        <div class="grid grid-3">
+          <!-- left: presentación -->
+          <div class="card">
+            <div class="chip">Gobierno de Información</div>
+            <h2 class="hero-title">SAFE (Security & Assessment For Everyone)</h2>
+            <p class="hero-p">Evaluación práctica para elevar la seguridad digital del equipo. Completa acciones concretas y visualiza tu avance por categoría.</p>
+            <div class="stats3">
+              <div class="stat">
+                <div class="val" id="statEss">0%</div>
+                <div class="lbl">Esencial</div>
+              </div>
+              <div class="stat">
+                <div class="val" id="statOpt">0%</div>
+                <div class="lbl">Opcional</div>
+              </div>
+              <div class="stat">
+                <div class="val" id="statAdv">0%</div>
+                <div class="lbl">Avanzado</div>
+              </div>
+            </div>
+          </div>
 
-    <section id="tab-dashboard" class="grid">
-      <div class="card">
-        <h3>Avance por categoría</h3>
-        <div class="muted">Barras horizontales. Haz clic en una categoría para ir al detalle.</div>
-        <canvas id="barChart" style="max-height:260px;margin-top:8px"></canvas>
-      </div>
+          <!-- center: radar -->
+          <div class="card">
+            <h3>Distribución de ítems</h3>
+            <div class="chartBox"><canvas id="radarChart"></canvas></div>
+          </div>
 
-      <div class="card">
-        <h3>Distribución de ítems</h3>
-        <div class="muted">Gráfico tipo malla (radar) conectado al avance real.</div>
-        <canvas id="radarChart" style="max-height:260px;margin-top:8px"></canvas>
-      </div>
-
-      <div class="card" style="grid-column:1/-1">
-        <h3>Progreso global</h3>
-        <div class="progressbar" style="margin:.5rem 0 10px 0"><span id="globalBar" style="width:0%"></span></div>
-        <div class="row">
-          <div class="chip">Completado: <b id="globalPct">0%</b></div>
-          <div class="muted">(<span id="globalCount">0</span> / <span id="globalTotal">0</span> ítems)</div>
+          <!-- right: barras -->
+          <div class="card">
+            <h3>Avance por categoría</h3>
+            <div class="chartBox"><canvas id="barChart"></canvas></div>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <section id="tab-checklist" class="card hidden">
-      <h3>Checklist</h3>
-      <div class="muted" style="margin-bottom:.5rem">Marca los ítems completados. Se guardan por usuario autenticado; sin login se usan los datos del usuario “anónimo”.</div>
-      <div id="checklistContainer"></div>
-    </section>
+        <!-- Progreso global compacto (debajo de presentación) -->
+        <div class="grid" style="margin-top:12px">
+          <div class="card" style="grid-column: 1 / -1;">
+            <h3 style="margin-bottom:6px">Progreso global</h3>
+            <div class="progressWrap">
+              <div class="progressTrack"><div id="globalBar" class="progressBar"></div></div>
+              <div class="progressPct" id="globalPct">0%</div>
+              <div class="small">(<span id="globalCount">0</span> / <span id="globalTotal">0</span> ítems)</div>
+            </div>
+          </div>
+        </div>
 
-    <div class="footer">© Comfenalco Valle — Seguridad Delagente</div>
-  </div>
+        <!-- Tarjetas de categorías -->
+        <div class="grid" style="margin-top:8px">
+          <div class="card" style="grid-column:1 / -1">
+            <h3 style="margin:0 0 10px 0">Categorías</h3>
+            <div id="categoryCards" class="catGrid"></div>
+          </div>
+        </div>
+      </section>
 
-  <!-- Modal de login simple (OTP por correo) -->
+      <!-- CHECKLIST -->
+      <section id="tab-checklist" class="hidden">
+        <div class="card">
+          <h2 style="margin-top:0">Checklist</h2>
+          <p class="muted">Marca los ítems completados. Se guardan por usuario autenticado; sin login se usan los datos del usuario “anónimo”.</p>
+          <div id="checklistContainer"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- login modal template -->
   <template id="tplLogin">
-    <div class="card" style="max-width:520px;margin:2rem auto">
-      <h3>Iniciar sesión</h3>
-      <p class="muted">Ingresa tu correo. Te enviaremos un enlace mágico (OTP).</p>
-      <div class="row">
-        <input id="emailInput" type="email" placeholder="tu@correo.com" style="flex:1;padding:.6rem;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text)">
-        <button class="btn primary" id="sendLink">Enviar enlace</button>
-        <button class="btn" id="closeLogin">Cerrar</button>
+    <div style="max-width:460px;margin:10vh auto;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px">
+      <h3 style="margin-top:0">Iniciar sesión</h3>
+      <p class="muted">Te enviaremos un enlace mágico al correo.</p>
+      <input id="emailInput" type="email" placeholder="tu@correo.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--panel-2);color:var(--text)">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="closeLogin" class="btn">Cancelar</button>
+        <button id="sendLink" class="btn primary">Enviar enlace</button>
       </div>
-      <div id="loginMsg" class="muted" style="margin-top:.5rem"></div>
+      <div id="loginMsg" class="small" style="margin-top:10px"></div>
     </div>
   </template>
-
-  <script src="./script.supabase.js"></script>
 </body>
 </html>
