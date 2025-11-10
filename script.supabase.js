@@ -1,41 +1,42 @@
 // =====================
 // 1) CONFIG SUPABASE
 // =====================
-// Reemplaza por tus datos (dejas como los tenías):
-const SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";
-const FALLBACK_USER_ID = "6abafec6-cf31-47a0-96e8-18b3cb08c0f0"; // usuario anónimo que creaste
+const SUPABASE_URL = "https://piqobvnfkglhwkhqzvpe.supabase.co";   // <-- TU URL
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpcW9idm5ma2dsaHdraHF6dnBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMzMwNDYsImV4cCI6MjA3NzkwOTA0Nn0.XQWWrmrEQYom9AtoqLYFyRn6ndzre3miEFEeht9yBkU";               // <-- TU ANON KEY
+// UUID de usuario “anónimo” que definiste (o deja uno fijo si no hay auth activa)
+const FALLBACK_USER_ID = "6abafec6-cf31-47a0-96e8-18b3cb08c0f0";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true }
 });
 
 // helpers
-const $    = (sel, el=document) => el.querySelector(sel);
+const $ = (sel, el=document) => el.querySelector(sel);
 const $all = (sel, el=document) => Array.from(el.querySelectorAll(sel));
 
 const els = {
-  // header / nav
-  btnTheme:  $('#btnTheme'),
-  btnDashTop:$('#btnDashTop'),
+  btnTheme:   $('#btnTheme'),
+  btnDashTop: $('#btnDashTop'),
   btnCheckTop:$('#btnCheckTop'),
-  btnLogin:  $('#btnLogin'),
-  btnLogout: $('#btnLogout'),
-  // tabs
-  tabBtns:   $all('.tabbtn'),
-  tabDash:   $('#tab-dashboard'),
-  tabCheck:  $('#tab-checklist'),
-  // charts + progreso global
-  barCanvas:   $('#barChart'),
-  radarCanvas: $('#radarChart'),
-  globalBar:   $('#globalBar'),
-  globalPct:   $('#globalPct'),
-  globalCount: $('#globalCount'),
-  globalTotal: $('#globalTotal'),
-  // checklist
+  btnLogin:   $('#btnLogin'),
+  btnLogout:  $('#btnLogout'),
+
+  tabDash:    $('#tab-dashboard'),
+  tabCheck:   $('#tab-checklist'),
+
+  barCanvas:  $('#barChart'),
+  radarCanvas:$('#radarChart'),
+
+  globalBar:  $('#globalBar'),
+  globalPct:  $('#globalPct'),
+  globalCount:$('#globalCount'),
+  globalTotal:$('#globalTotal'),
+
+  kpiEssential: $('#kpiEssential'),
+  kpiOptional:  $('#kpiOptional'),
+  kpiAdvanced:  $('#kpiAdvanced'),
+
   checklistContainer: $('#checklistContainer'),
-  // KPIs (si luego calculas por nivel)
-  kpiEss: $('#kpiEss'), kpiOpt: $('#kpiOpt'), kpiAdv: $('#kpiAdv')
 };
 
 let barChart, radarChart;
@@ -46,210 +47,157 @@ let currentUser = null;
 // =====================
 function toggleTheme(){
   const root = document.documentElement;
-  const cur = root.getAttribute('data-theme') || 'dark';
-  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
-  // Al cambiar tema, refrescamos estilos de Chart.js
-  destroyCharts(); ensureCharts(); loadDashboard();
+  const cur = root.getAttribute('data-theme') || 'light';
+  root.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
 }
-els.btnTheme?.addEventListener('click', toggleTheme);
+els.btnTheme.addEventListener('click', toggleTheme);
 
 // =====================
 // 3) NAV / TABS
 // =====================
 function showTab(id){
-  const tab = document.getElementById(id);
-  if (!tab) return;
-
-  [els.tabDash, els.tabCheck].forEach(x => x && x.classList.remove('active'));
-  $all('.tabbtn').forEach(b=> b?.classList.remove('active'));
-
-  tab.classList.add('active');
-  const btn = document.querySelector(`.tabbtn[data-tab="${id}"]`);
-  btn?.classList.add('active');
+  // protege contra nulls si el botón no existe
+  [els.tabDash, els.tabCheck].forEach(x => x && x.classList.add('hidden'));
+  if (id === 'tab-dashboard') els.tabDash.classList.remove('hidden');
+  if (id === 'tab-checklist') els.tabCheck.classList.remove('hidden');
 }
-$all('.tabbtn').forEach(btn=>{
-  btn.addEventListener('click', ()=> showTab(btn.dataset.tab));
-});
-els.btnDashTop?.addEventListener('click', ()=> showTab('tab-dashboard'));
-els.btnCheckTop?.addEventListener('click', ()=> showTab('tab-checklist'));
+els.btnDashTop.addEventListener('click', ()=> showTab('tab-dashboard'));
+els.btnCheckTop.addEventListener('click',()=> showTab('tab-checklist'));
 
 // =====================
-// 4) AUTH (OTP POR EMAIL)
+// 4) AUTH (OTP por email)
 // =====================
 async function refreshUserUI(){
   const { data } = await sb.auth.getUser();
   currentUser = data?.user ?? null;
-
   if (currentUser){
-    els.btnLogin.style.display  = 'none';
-    els.btnLogout.style.display = '';
-  } else {
-    els.btnLogin.style.display  = '';
-    els.btnLogout.style.display = 'none';
+    els.btnLogin.style.display='none';
+    els.btnLogout.style.display='';
+  }else{
+    els.btnLogin.style.display='';
+    els.btnLogout.style.display='none';
   }
 }
 
 function openLoginModal(){
   const host = document.body.appendChild(document.createElement('div'));
-  host.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:50;display:grid;place-items:center';
-  const box = document.createElement('div');
-  box.style.cssText = 'background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:320px';
-  box.innerHTML = `
-    <h3 style="margin-top:0">Iniciar sesión</h3>
-    <p class="muted">Te enviaremos un enlace mágico al correo.</p>
-    <input id="emailInput" type="email" placeholder="tu@correo.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text)">
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-      <button id="closeLogin" class="btn">Cancelar</button>
-      <button id="sendLink" class="btn primary">Enviar enlace</button>
-    </div>
-    <div id="loginMsg" class="muted" style="margin-top:8px"></div>
-  `;
-  host.appendChild(box);
+  host.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);z-index:50';
+  const frag = document.importNode($('#tplLogin').content, true);
+  host.appendChild(frag);
+  $('#closeLogin', host).onclick = ()=> host.remove();
 
-  $('#closeLogin',box).onclick = ()=> host.remove();
-  $('#sendLink',box).onclick = async ()=>{
-    const email = $('#emailInput',box).value.trim();
-    if (!email){ $('#loginMsg',box).textContent='Ingresa un correo válido.'; return; }
-    $('#sendLink',box).disabled = true; $('#loginMsg',box).textContent='Enviando...';
+  $('#sendLink', host).onclick = async ()=>{
+    const email = $('#emailInput', host).value.trim();
+    if(!email){ $('#loginMsg',host).textContent='Ingresa un correo válido.'; return; }
+    $('#sendLink', host).disabled = true;
+    $('#loginMsg',host).textContent='Enviando enlace...';
     try{
       const { error } = await sb.auth.signInWithOtp({
-        email, options:{ emailRedirectTo: window.location.origin + window.location.pathname }
+        email,
+        options:{ emailRedirectTo: window.location.origin + window.location.pathname }
       });
       if (error) throw error;
-      $('#loginMsg',box).textContent = 'Revisa tu correo y sigue el enlace para iniciar sesión.';
+      $('#loginMsg',host).textContent = 'Revisa tu correo y sigue el enlace para iniciar sesión.';
     }catch(e){
-      $('#loginMsg',box).textContent = 'Error: ' + (e.message || e);
+      $('#loginMsg',host).textContent = 'Error: ' + (e.message || e);
     }finally{
-      $('#sendLink',box).disabled = false;
+      $('#sendLink', host).disabled = false;
     }
   };
 }
-els.btnLogin?.addEventListener('click', openLoginModal);
-els.btnLogout?.addEventListener('click', async ()=>{
+els.btnLogin.addEventListener('click', openLoginModal);
+els.btnLogout.addEventListener('click', async ()=>{
   await sb.auth.signOut();
   await refreshUserUI();
   await loadAll();
 });
 
 // =====================
-// 5) LLAMADAS RPC / CONSULTAS
+// 5) DATA HELPERS (RPC / SELECTs)
 // =====================
 async function getActiveUserId(){
   const { data } = await sb.auth.getUser();
   return data?.user?.id || FALLBACK_USER_ID;
 }
 
-// IMPORTANTE: usa los nombres reales de los parámetros en tus RPCs (p_user_id)
 async function fetchCategoryProgress(){
   const uid = await getActiveUserId();
-  const { data, error } = await sb.rpc('rpc_category_progress', { p_user_id: uid });
-  if (error){ console.error('rpc_category_progress error', error); throw error; }
+  const { data, error } = await sb.rpc('rpc_category_progress', { user_id: uid });
+  if (error){ console.error('rpc_category_progress error', error); return []; }
   return data || [];
 }
 
 async function fetchGlobalProgress(){
   const uid = await getActiveUserId();
   const { data, error } = await sb.rpc('rpc_global_progress', { p_user_id: uid });
-  if (error){ console.error('rpc_global_progress error', error); throw error; }
-  const row = Array.isArray(data) ? (data[0] || null) : data;
-  return row || { total_done: 0, total_items: 0, percent: 0 };
+  if (error){ console.error('rpc_global_progress error', error); return { total_done:0,total_items:0,percent:0 }; }
+  // data puede venir como array con 1 fila
+  const row = Array.isArray(data) ? data[0] : data;
+  return row || { total_done:0,total_items:0,percent:0 };
 }
 
-async function fetchChecklistData(){
+async function fetchChecklistRows(){
   const uid = await getActiveUserId();
-  // Vista items_by_category debe exponer: user_id, category_id, category_name/slug, item_id, item_label, done, category_order, item_order
-  const q = sb.from('items_by_category').select('*').eq('user_id', uid);
-  // si existen columnas de orden, las usamos
-  try{ q.order('category_order', { ascending:true }); }catch(_){}
-  try{ q.order('item_order', { ascending:true }); }catch(_){}
-  const { data, error } = await q;
+  const { data, error } = await sb
+    .from('items_by_category')
+    .select('*')
+    .eq('user_id', uid)              // si no hay filas para uid, igual devuelve todas con user_id null
+    .order('category_order', {ascending:true})
+    .order('item_order', {ascending:true});
   if (error){
-    console.warn('items_by_category no disponible, usando fallback.', error.message);
+    console.warn('items_by_category fallback: ', error.message);
     return [];
   }
   return data || [];
 }
 
-async function upsertProgress(itemId, categoryId, completed){
+async function upsertProgress(itemId, completed){
   const uid = await getActiveUserId();
-  // RPC: rpc_upsert_progress(p_user_id uuid, p_item_id bigint, p_completed bool)
   const { error } = await sb.rpc('rpc_upsert_progress', {
     p_user_id: uid,
     p_item_id: itemId,
     p_completed: !!completed
   });
-  if (error) console.error('upsert_progress error →', error);
+  if (error) console.error('upsert_progress error', error);
 }
 
 // =====================
-// 6) GRÁFICAS
+// 6) CHARTS
 // =====================
-function destroyCharts(){
-  if (barChart){ barChart.destroy(); barChart=null; }
-  if (radarChart){ radarChart.destroy(); radarChart=null; }
+function colorFor(p){
+  if (p >= 80) return '#10b981';   // verde
+  if (p >= 40) return '#f59e0b';   // ámbar
+  return '#ef4444';                // rojo
 }
-
 function ensureCharts(){
-  const css = getComputedStyle(document.documentElement);
-  const colLine = css.getPropertyValue('--accent').trim() || '#27c093';
-  const colFill = css.getPropertyValue('--accent-25').trim() || 'rgba(39,192,147,.25)';
-  const colText = css.getPropertyValue('--text').trim() || '#101010';
-  const colGrid = css.getPropertyValue('--border').trim() || '#e5e7eb';
-
   if (!barChart){
     barChart = new Chart(els.barCanvas, {
       type: 'bar',
-      data: { labels: [], datasets: [{ label:'Avance', data:[], borderRadius:8 }]},
+      data: { labels: [], datasets: [{ label:'Avance (%)', data:[], borderRadius:8, backgroundColor:[] }]},
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
         indexAxis: 'y',
-        layout: { padding:{ left:8, right:8, top:8, bottom:8 } },
-        plugins:{ legend:{ display:false }, tooltip:{ enabled:true } },
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{ legend:{ display:false }, tooltip:{enabled:true}},
         scales:{
-          x:{ beginAtZero:true, max:100, ticks:{ color:colText }, grid:{ color:colGrid }},
-          y:{ ticks:{ color:colText }, grid:{ display:false } }
-        },
-        elements:{
-          bar:{
-            backgroundColor:(ctx)=>{
-              const v = ctx.raw ?? 0;
-              if (v >= 75) return '#1db954';
-              if (v >= 40) return '#f5b301';
-              return '#ff6b6b';
-            },
-            borderSkipped:false,
-            barPercentage:0.7,
-            categoryPercentage:0.8,
-            maxBarThickness:38
-          }
+          x:{ beginAtZero:true, max:100, ticks:{color: getComputedStyle(document.documentElement).getPropertyValue('--text')}},
+          y:{ ticks:{color: getComputedStyle(document.documentElement).getPropertyValue('--text')}}
         }
       }
     });
   }
-
   if (!radarChart){
     radarChart = new Chart(els.radarCanvas, {
       type: 'radar',
-      data: { labels: [], datasets:[{ label:'Avance %', data:[], fill:true }]},
+      data: { labels: [], datasets:[{ label:'Avance %', data:[], fill:true, backgroundColor:'rgba(16,185,129,.20)', borderColor:'#10b981', pointBackgroundColor:'#10b981'}]},
       options: {
         responsive:true,
         maintainAspectRatio:false,
-        plugins:{ legend:{ display:false }},
-        scales:{
-          r:{
-            suggestedMin:0, suggestedMax:100,
-            angleLines:{ color:colGrid },
-            grid:{ color:colGrid },
-            pointLabels:{ color:colText, font:{ size:12 } },
-            ticks:{ display:false }
-          }
-        },
-        elements:{
-          line:{ borderColor: colLine, borderWidth:2 },
-          point:{ backgroundColor: colLine, radius:3 },
-          polygon:{ backgroundColor: colFill }
-        }
+        scales:{ r:{ angleLines:{color: getComputedStyle(document.documentElement).getPropertyValue('--border')},
+                     grid:{color: getComputedStyle(document.documentElement).getPropertyValue('--border')},
+                     pointLabels:{color: getComputedStyle(document.documentElement).getPropertyValue('--text')},
+                     ticks:{display:false, max:100} } },
+        plugins:{ legend:{ display:false }}
       }
     });
   }
@@ -258,22 +206,26 @@ function ensureCharts(){
 function renderCategoryCharts(rows){
   const labels = rows.map(r=> r.label ?? r.category ?? 'Cat');
   const values = rows.map(r=> Math.round(r.percent ?? 0));
+  const colors = values.map(v => colorFor(v));
 
   ensureCharts();
+  // Barras
   barChart.data.labels = labels;
   barChart.data.datasets[0].data = values;
+  barChart.data.datasets[0].backgroundColor = colors;
   barChart.update();
 
+  // Radar
   radarChart.data.labels = labels;
   radarChart.data.datasets[0].data = values;
   radarChart.update();
 
-  // clic en barra -> ir a checklist y hacer scroll
+  // Click en una barra → abre checklist y hace scroll
   els.barCanvas.onclick = (evt)=>{
     const points = barChart.getElementsAtEventForMode(evt,'nearest',{intersect:true},true);
     if(!points?.length) return;
     const idx = points[0].index;
-    const catSlug = (rows[idx].category_slug || rows[idx].category || '').toString();
+    const catSlug = (rows[idx].category_slug || '').toString();
     showTab('tab-checklist');
     if (catSlug){
       const target = document.getElementById(`cat-${catSlug}`);
@@ -282,124 +234,129 @@ function renderCategoryCharts(rows){
   };
 }
 
-function renderGlobalSummary(summary){
-  const pct   = Math.round(summary?.percent ?? 0);
-  const done  = summary?.total_done ?? 0;
-  const total = summary?.total_items ?? 0;
-
+function renderGlobal(summary){
+  const pct  = Math.round(summary?.percent ?? 0);
+  const done = summary?.total_done ?? 0;
+  const tot  = summary?.total_items ?? 0;
   els.globalBar.style.width = `${pct}%`;
-  els.globalPct.textContent   = `${pct}%`;
+  els.globalPct.textContent = `${pct}%`;
   els.globalCount.textContent = done;
-  els.globalTotal.textContent = total;
+  els.globalTotal.textContent = tot;
+}
+
+// KPIs por nivel (Esencial / Opcional / Avanzado), calculados en cliente desde la vista
+function renderLevelKPIs(rows){
+  // Agrupa por nivel: total ítems y cuántos hechos
+  const acc = {
+    essential: { done:0, total:0 },
+    optional:  { done:0, total:0 },
+    advanced:  { done:0, total:0 },
+  };
+  for (const r of rows){
+    const lvl = (r.item_level || 'essential').toLowerCase();
+    if (!acc[lvl]) continue;
+    acc[lvl].total += 1;
+    if (r.done) acc[lvl].done += 1;
+  }
+  const pct = (o)=> (o.total>0 ? Math.round((o.done*100)/o.total) : 0);
+
+  els.kpiEssential.textContent = pct(acc.essential) + '%';
+  els.kpiOptional.textContent  = pct(acc.optional)  + '%';
+  els.kpiAdvanced.textContent  = pct(acc.advanced)  + '%';
 }
 
 // =====================
-// 7) CHECKLIST
+// 7) CHECKLIST RENDER
 // =====================
 function renderChecklist(rows){
-  const byCat = new Map();
-  for(const r of rows){
-    const key = r.category_slug || r.category_id || r.category_name || 'categoria';
-    if (!byCat.has(key)) byCat.set(key, { name: r.category_name || String(key), slug: key, items: [] });
-    byCat.get(key).items.push(r);
-  }
-
   const root = els.checklistContainer;
   root.innerHTML = '';
 
-  if (byCat.size === 0){
+  // agrupa por categoría
+  const byCat = new Map();
+  for(const r of rows){
+    const key = r.category_slug || r.category_id || r.category_name || 'cat';
+    if(!byCat.has(key)) byCat.set(key, { slug:key, name: r.category_name || String(key), items: [] });
+    byCat.get(key).items.push(r);
+  }
+
+  if (byCat.size===0){
     const empty = document.createElement('div');
-    empty.className = 'muted';
+    empty.className='muted';
     empty.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category" y sus permisos RLS).';
     root.appendChild(empty);
     return;
   }
 
-  for (const [slug, bucket] of byCat.entries()){
-    const wrap = document.createElement('div');
-    wrap.className = 'card'; wrap.id = `cat-${slug}`;
+  for(const [,bucket] of byCat.entries()){
+    const wrap  = document.createElement('div'); wrap.className='cat'; wrap.id = `cat-${bucket.slug}`;
+    const head  = document.createElement('div'); head.className='catHead';
+    const title = document.createElement('h3'); title.textContent = bucket.name; title.style.margin='0';
+    const chip  = document.createElement('div'); chip.className='chip';
 
-    const head = document.createElement('div');
-    head.className = 'catHead';
+    const doneCount = bucket.items.filter(i=>i.done).length;
+    chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
+    head.appendChild(title); head.appendChild(chip); wrap.appendChild(head);
 
-    const title = document.createElement('h3');
-    title.textContent = bucket.name; title.style.margin='0';
+    const list = document.createElement('div'); list.className='list';
+    for(const it of bucket.items){
+      const row = document.createElement('label'); row.className='item';
 
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    const doneInit = bucket.items.filter(i=>i.done).length;
-    chip.textContent = `${doneInit}/${bucket.items.length} hechos`;
-
-    head.appendChild(title); head.appendChild(chip);
-    wrap.appendChild(head);
-
-    const list = document.createElement('div');
-    list.className = 'list';
-
-    let doneCounter = doneInit;
-
-    for (const it of bucket.items){
-      const row = document.createElement('label');
-      row.className = 'item';
-
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.checked = !!it.done;
-
+      const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!it.done;
       cb.addEventListener('change', async ()=>{
+        const prev = !cb.checked;
         try{
-          await upsertProgress(it.item_id, it.category_id, cb.checked);
-          // refrescar dashboard + contador local de la categoría
+          await upsertProgress(it.item_id, cb.checked);
+          // refresca tablero y KPIs
           await loadDashboard();
-          doneCounter += (cb.checked ? 1 : -1);
-          chip.textContent = `${doneCounter}/${bucket.items.length} hechos`;
+          // refresca chip rápido
+          const newDone = (cb.checked ? doneCount+1 : doneCount-1);
+          chip.textContent = `${newDone}/${bucket.items.length} hechos`;
         }catch(e){
           console.error(e);
-          cb.checked = !cb.checked; // revertir ante error
+          cb.checked = prev; // revierte
         }
       });
 
       const span = document.createElement('span');
       span.textContent = it.item_label || `Ítem ${it.item_id}`;
+      const lvl = document.createElement('span');
+      lvl.textContent = (it.item_level || 'essential');
+      lvl.className = 'pill';
+      lvl.style.marginLeft = '10px';
 
-      row.appendChild(cb); row.appendChild(span);
+      row.appendChild(cb);
+      row.appendChild(span);
+      row.appendChild(lvl);
       list.appendChild(row);
     }
-
     wrap.appendChild(list);
     root.appendChild(wrap);
   }
 }
 
 // =====================
-// 8) CARGA
+// 8) LOADERS
 // =====================
 async function loadDashboard(){
-  try{
-    const [catRows, global] = await Promise.all([
-      fetchCategoryProgress().catch(_=>[]),
-      fetchGlobalProgress().catch(_=>({ percent:0, total_done:0, total_items:0 }))
-    ]);
-    renderCategoryCharts(catRows);
-    renderGlobalSummary(global);
-  }catch(e){
-    console.error('Error cargando dashboard', e);
-  }
+  // category progress + global + rows (para KPIs)
+  const [catRows, global, rows] = await Promise.all([
+    fetchCategoryProgress(),
+    fetchGlobalProgress(),
+    fetchChecklistRows()
+  ]);
+  renderCategoryCharts(catRows);
+  renderGlobal(global);
+  renderLevelKPIs(rows);
 }
 
 async function loadChecklist(){
-  try{
-    const rows = await fetchChecklistData();
-    renderChecklist(rows);
-  }catch(e){
-    console.error('Error cargando checklist', e);
-    els.checklistContainer.innerHTML = `<div class="muted">Error al cargar checklist: ${e.message||e}</div>`;
-  }
+  const rows = await fetchChecklistRows();
+  renderChecklist(rows);
 }
 
 async function loadAll(){
   await refreshUserUI();
-  destroyCharts(); ensureCharts();
   await loadDashboard();
   await loadChecklist();
 }
@@ -408,4 +365,5 @@ async function loadAll(){
 // 9) START
 // =====================
 console.log('Iniciando app…');
+showTab('tab-dashboard');
 loadAll();
