@@ -43,6 +43,26 @@ let barChart, radarChart;
 let currentUser = null;
 
 // =====================
+// THEME TOGGLE (🌙 / ☀️)
+// =====================
+const themeToggle = document.getElementById('themeToggle');
+const root = document.documentElement;
+
+// Cargar tema guardado
+const savedTheme = localStorage.getItem('theme') || 'light';
+root.setAttribute('data-theme', savedTheme);
+themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+// Evento click
+themeToggle.addEventListener('click', () => {
+  const current = root.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+});
+
+// =====================
 // 2) THEME
 // =====================
 function toggleTheme(){
