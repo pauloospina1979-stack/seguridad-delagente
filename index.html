@@ -72,10 +72,8 @@
     .radarWrap{height:420px}
     .progressBar{width:100%; height:12px; border-radius:999px; background:#0a162d; border:1px solid var(--border); overflow:hidden}
     .progressBar > div{height:100%; background:var(--accent); width:0%}
-    /* tabs */
     .tabs{display:flex; gap:10px; margin-bottom:18px}
     .hidden{display:none !important}
-    /* checklist */
     .cat{border:1px solid var(--border); border-radius:14px; padding:14px; background:var(--card)}
     .catHead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
     .chip{background:rgba(34,197,94,.1); color:#34d399; border:1px solid #065f46; padding:6px 10px; border-radius:999px; font-weight:700}
@@ -87,6 +85,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
+<!-- IMPORTANTE: el data-theme vive en <body> -->
 <body data-theme="light">
   <header>
     <div class="brand">
@@ -105,7 +105,6 @@
   <main>
     <!-- DASHBOARD -->
     <div id="tab-dashboard" class="grid grid-3">
-      <!-- Intro + KPIs -->
       <section class="card">
         <span class="pill">Gobierno de Información</span>
         <h2 style="margin-top:10px">Seguridad Delagente</h2>
@@ -117,18 +116,9 @@
         </p>
 
         <div class="kpis">
-          <div class="kpi">
-            <div class="num" id="kpiEssential">0%</div>
-            <div class="lbl">Esencial</div>
-          </div>
-          <div class="kpi">
-            <div class="num" id="kpiOptional">0%</div>
-            <div class="lbl">Opcional</div>
-          </div>
-          <div class="kpi">
-            <div class="num" id="kpiAdvanced">0%</div>
-            <div class="lbl">Avanzado</div>
-          </div>
+          <div class="kpi"><div class="num" id="kpiEssential">0%</div><div class="lbl">Esencial</div></div>
+          <div class="kpi"><div class="num" id="kpiOptional">0%</div><div class="lbl">Opcional</div></div>
+          <div class="kpi"><div class="num" id="kpiAdvanced">0%</div><div class="lbl">Avanzado</div></div>
         </div>
 
         <div style="margin-top:18px">
@@ -141,13 +131,11 @@
         </div>
       </section>
 
-      <!-- Radar -->
       <section class="card">
         <h2>Distribución de ítems</h2>
         <div class="radarWrap"><canvas id="radarChart"></canvas></div>
       </section>
 
-      <!-- Barras -->
       <section class="card">
         <h2>Avance por categoría</h2>
         <p class="muted" style="margin-top:-6px">Barras horizontales. Haz clic en una categoría para ir al detalle.</p>
@@ -156,7 +144,7 @@
     </div>
 
     <!-- CHECKLIST -->
-    <div id="tab-checklist" class="hidden">
+    <div id="tab-checklist" class="">
       <div class="tabs">
         <button class="btn tabbtn active" data-tab="tab-checklist">Checklist</button>
         <button class="btn tabbtn" data-tab="tab-dashboard">Dashboard</button>
