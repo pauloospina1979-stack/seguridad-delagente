@@ -18,17 +18,22 @@ const els = {
   btnCheckTop: $('#btnCheckTop'),
   btnLogin: $('#btnLogin'),
   btnLogout: $('#btnLogout'),
+
   tabDash: $('#tab-dashboard'),
   tabCheck: $('#tab-checklist'),
+
   barCanvas: $('#barChart'),
   radarCanvas: $('#radarChart'),
+
   globalBar: $('#globalBar'),
   globalPct: $('#globalPct'),
   globalCount: $('#globalCount'),
   globalTotal: $('#globalTotal'),
+
   kpiEssential: $('#kpiEssential'),
   kpiOptional: $('#kpiOptional'),
   kpiAdvanced: $('#kpiAdvanced'),
+
   checklistContainer: $('#checklistContainer'),
 };
 
@@ -43,19 +48,19 @@ function toggleTheme() {
   const cur = root.getAttribute('data-theme') || 'light';
   root.setAttribute('data-theme', cur === 'light' ? 'dark' : 'light');
 }
-els.btnTheme.addEventListener('click', toggleTheme);
+els.btnTheme?.addEventListener('click', toggleTheme);
 
 // =====================
 // 3) NAV
 // =====================
 function showTab(id) {
-  els.tabDash.classList.add('hidden');
-  els.tabCheck.classList.add('hidden');
-  if (id === 'tab-dashboard') els.tabDash.classList.remove('hidden');
-  if (id === 'tab-checklist') els.tabCheck.classList.remove('hidden');
+  if (els.tabDash) els.tabDash.classList.add('hidden');
+  if (els.tabCheck) els.tabCheck.classList.add('hidden');
+  if (id === 'tab-dashboard' && els.tabDash) els.tabDash.classList.remove('hidden');
+  if (id === 'tab-checklist' && els.tabCheck) els.tabCheck.classList.remove('hidden');
 }
-els.btnDashTop.addEventListener('click', () => showTab('tab-dashboard'));
-els.btnCheckTop.addEventListener('click', () => showTab('tab-checklist'));
+els.btnDashTop?.addEventListener('click', () => showTab('tab-dashboard'));
+els.btnCheckTop?.addEventListener('click', () => showTab('tab-checklist'));
 
 // =====================
 // 4) AUTH
@@ -64,11 +69,11 @@ async function refreshUserUI() {
   const { data } = await sb.auth.getUser();
   currentUser = data?.user ?? null;
   if (currentUser) {
-    els.btnLogin.style.display = 'none';
-    els.btnLogout.style.display = '';
+    if (els.btnLogin) els.btnLogin.style.display = 'none';
+    if (els.btnLogout) els.btnLogout.style.display = '';
   } else {
-    els.btnLogin.style.display = '';
-    els.btnLogout.style.display = 'none';
+    if (els.btnLogin) els.btnLogin.style.display = '';
+    if (els.btnLogout) els.btnLogout.style.display = 'none';
   }
 }
 
@@ -81,10 +86,7 @@ function openLoginModal() {
   document.querySelector('#sendLink', host)?.addEventListener('click', async () => {
     const email = document.querySelector('#emailInput', host).value.trim();
     const msg = document.querySelector('#loginMsg', host);
-    if (!email) {
-      msg.textContent = 'Ingresa un correo válido.';
-      return;
-    }
+    if (!email) { msg.textContent = 'Ingresa un correo válido.'; return; }
     msg.textContent = 'Enviando enlace...';
     try {
       const { error } = await sb.auth.signInWithOtp({
@@ -98,8 +100,8 @@ function openLoginModal() {
     }
   });
 }
-els.btnLogin.addEventListener('click', openLoginModal);
-els.btnLogout.addEventListener('click', async () => {
+els.btnLogin?.addEventListener('click', openLoginModal);
+els.btnLogout?.addEventListener('click', async () => {
   await sb.auth.signOut();
   await refreshUserUI();
   await loadAll();
@@ -116,26 +118,22 @@ async function getActiveUserId() {
 async function fetchCategoryProgress() {
   const uid = await getActiveUserId();
   const { data, error } = await sb.rpc('rpc_category_progress', { user_id: uid });
-  if (error) {
-    console.error('rpc_category_progress error', error);
-    return [];
-  }
+  if (error) { console.error('rpc_category_progress error', error); return []; }
   return data || [];
 }
 
 async function fetchGlobalProgress() {
   const uid = await getActiveUserId();
   const { data, error } = await sb.rpc('rpc_global_progress', { p_user_id: uid });
-  if (error) {
-    console.error('rpc_global_progress error', error);
-    return { total_done: 0, total_items: 0, percent: 0 };
-  }
+  if (error) { console.error('rpc_global_progress error', error); return { total_done: 0, total_items: 0, percent: 0 }; }
   const row = Array.isArray(data) ? data[0] : data;
   return row || { total_done: 0, total_items: 0, percent: 0 };
 }
 
+// Trae filas desde la vista v2 (incluye orden y puede incluir descripciones)
 async function fetchChecklistRows() {
   const uid = await getActiveUserId();
+
   let { data, error } = await sb
     .from('items_by_category_v2')
     .select('*')
@@ -144,7 +142,7 @@ async function fetchChecklistRows() {
     .order('item_order', { ascending: true });
 
   if (error) {
-    console.warn('items_by_category fallback:', error.message);
+    console.warn('items_by_category_v2 fallback:', error.message);
     const res2 = await sb
       .from('items_by_category_v2')
       .select('*')
@@ -152,10 +150,10 @@ async function fetchChecklistRows() {
     data = res2.data || [];
   }
 
-  // 🔹 Si no trae la descripción, la completamos desde categories
+  // Si la vista aún no trae category_description, lo rellenamos desde categories
   if (data && data.length && !('category_description' in data[0])) {
     const { data: cats } = await sb.from('categories').select('id,description');
-    const mapCat = new Map(cats.map(c => [String(c.id), c.description]));
+    const mapCat = new Map((cats || []).map(c => [String(c.id), c.description]));
     data = data.map(r => ({
       ...r,
       category_description: r.category_description || mapCat.get(String(r.category_id)) || ''
@@ -184,14 +182,13 @@ function colorFor(p) {
   return '#ef4444';
 }
 function ensureCharts() {
-  if (!barChart) {
+  if (!barChart && els.barCanvas) {
     barChart = new Chart(els.barCanvas, {
       type: 'bar',
       data: { labels: [], datasets: [{ label: 'Avance (%)', data: [], borderRadius: 8, backgroundColor: [] }] },
       options: {
         indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { beginAtZero: true, max: 100, ticks: { color: getComputedStyle(document.body).getPropertyValue('--text') } },
@@ -200,23 +197,15 @@ function ensureCharts() {
       }
     });
   }
-  if (!radarChart) {
+  if (!radarChart && els.radarCanvas) {
     radarChart = new Chart(els.radarCanvas, {
       type: 'radar',
-      data: {
-        labels: [],
-        datasets: [{
-          label: 'Avance %',
-          data: [],
-          fill: true,
-          backgroundColor: 'rgba(16,185,129,.20)',
-          borderColor: '#10b981',
-          pointBackgroundColor: '#10b981'
-        }]
-      },
+      data: { labels: [], datasets: [{
+        label: 'Avance %', data: [], fill: true,
+        backgroundColor: 'rgba(16,185,129,.20)', borderColor: '#10b981', pointBackgroundColor: '#10b981'
+      }]},
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         scales: {
           r: {
             angleLines: { color: getComputedStyle(document.body).getPropertyValue('--border') },
@@ -235,20 +224,24 @@ function renderCategoryCharts(rows) {
   const values = rows.map(r => Math.round(r.percent ?? 0));
   const colors = values.map(colorFor);
   ensureCharts();
-  barChart.data.labels = labels;
-  barChart.data.datasets[0].data = values;
-  barChart.data.datasets[0].backgroundColor = colors;
-  barChart.update();
-  radarChart.data.labels = labels;
-  radarChart.data.datasets[0].data = values;
-  radarChart.update();
+  if (barChart) {
+    barChart.data.labels = labels;
+    barChart.data.datasets[0].data = values;
+    barChart.data.datasets[0].backgroundColor = colors;
+    barChart.update();
+  }
+  if (radarChart) {
+    radarChart.data.labels = labels;
+    radarChart.data.datasets[0].data = values;
+    radarChart.update();
+  }
 }
 function renderGlobal(s) {
   const pct = Math.round(s?.percent ?? 0);
-  els.globalBar.style.width = `${pct}%`;
-  els.globalPct.textContent = `${pct}%`;
-  els.globalCount.textContent = s?.total_done ?? 0;
-  els.globalTotal.textContent = s?.total_items ?? 0;
+  if (els.globalBar) els.globalBar.style.width = `${pct}%`;
+  if (els.globalPct) els.globalPct.textContent = `${pct}%`;
+  if (els.globalCount) els.globalCount.textContent = s?.total_done ?? 0;
+  if (els.globalTotal) els.globalTotal.textContent = s?.total_items ?? 0;
 }
 function renderLevelKPIs(rows) {
   const agg = { essential: { done: 0, total: 0 }, optional: { done: 0, total: 0 }, advanced: { done: 0, total: 0 } };
@@ -259,9 +252,9 @@ function renderLevelKPIs(rows) {
     if (r.done) agg[lvl].done += 1;
   }
   const pc = o => o.total > 0 ? Math.round((o.done * 100) / o.total) : 0;
-  els.kpiEssential.textContent = pc(agg.essential) + '%';
-  els.kpiOptional.textContent = pc(agg.optional) + '%';
-  els.kpiAdvanced.textContent = pc(agg.advanced) + '%';
+  if (els.kpiEssential) els.kpiEssential.textContent = pc(agg.essential) + '%';
+  if (els.kpiOptional)  els.kpiOptional.textContent  = pc(agg.optional)  + '%';
+  if (els.kpiAdvanced)  els.kpiAdvanced.textContent  = pc(agg.advanced)  + '%';
 }
 
 function sortChecklistRows(rows){
@@ -293,12 +286,13 @@ function renderChecklist(rows){
   }
 
   const root = els.checklistContainer;
+  if (!root) return;
   root.innerHTML = '';
 
   if (byCat.size === 0){
     const empty = document.createElement('div');
     empty.className = 'muted';
-    empty.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category" y sus permisos RLS).';
+    empty.textContent = 'No hay datos de checklist disponibles (verifica la vista "items_by_category_v2" y sus permisos RLS).';
     root.appendChild(empty);
     return;
   }
@@ -317,7 +311,7 @@ function renderChecklist(rows){
 
     const chip = document.createElement('div');
     chip.className = 'chip';
-    const doneCount = bucket.items.filter(i => i.done).length;
+    let doneCount = bucket.items.filter(i => i.done).length;
     chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
 
     head.appendChild(title);
@@ -337,17 +331,17 @@ function renderChecklist(rows){
       cb.checked = !!it.done;
 
       cb.addEventListener('change', async ()=>{
-        const before = cb.checked;
+        const beforeChecked = cb.checked;
         try{
-          await upsertProgress(it.item_id, it.category_id, cb.checked);
+          await upsertProgress(it.item_id, beforeChecked);
           // refrescar dashboard
           await loadDashboard();
-          // actualizar el chip de esta categoría
-          const newDone = before ? (doneCount + 1) : (doneCount - 1);
-          chip.textContent = `${newDone}/${bucket.items.length} hechos`;
+          // recalcular contadores visualmente
+          doneCount = bucket.items.filter(i => i.item_id === it.item_id ? beforeChecked : i.done).length;
+          chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
         }catch(e){
           console.error(e);
-          cb.checked = !before; // revertir
+          cb.checked = !beforeChecked; // revertir
         }
       });
 
@@ -360,32 +354,29 @@ function renderChecklist(rows){
       spanTitle.className = 'itemTitle';
       spanTitle.textContent = it.item_label || it.title || `Ítem ${it.item_id}`;
 
-      // 2.2 ETIQUETA de nivel (essential/optional/advanced)
+      // 2.2 ETIQUETA de nivel
       const level = (it.item_level || it.level || it.difficulty || '').toString().toLowerCase();
       const badge = document.createElement('span');
       badge.className = `badge ${level || 'neutral'}`;
       badge.textContent = level || 'nivel';
 
-      // 2.3 **DESCRIPCIÓN** (tomamos el primer campo que exista)
+      // 2.3 DESCRIPCIÓN
       const descText =
         it.item_description ??
         it.description ??
         it.item_detail ??
-        it.details ??
-        '';
+        it.details ?? '';
 
-      // Creamos el nodo de descripción solo si hay texto
-      let descEl = null;
       if (descText && String(descText).trim() !== '') {
-        descEl = document.createElement('div');
+        const descEl = document.createElement('div');
         descEl.className = 'itemDesc';
         descEl.textContent = String(descText).trim();
+        textWrap.appendChild(descEl);
       }
 
-      textWrap.appendChild(spanTitle);
-      textWrap.appendChild(badge);
-      if (descEl) textWrap.appendChild(descEl);
-
+      // ensamblar
+      textWrap.prepend(badge);
+      textWrap.prepend(spanTitle);
       row.appendChild(cb);
       row.appendChild(textWrap);
       list.appendChild(row);
@@ -396,24 +387,30 @@ function renderChecklist(rows){
   }
 }
 
-
 // =====================
 // 8) LOADERS
 // =====================
 async function loadDashboard() {
-  const [cats, global, rows] = await Promise.all([fetchCategoryProgress(), fetchGlobalProgress(), fetchChecklistRows()]);
+  const [cats, global, rows] = await Promise.all([
+    fetchCategoryProgress(),
+    fetchGlobalProgress(),
+    fetchChecklistRows()
+  ]);
   renderCategoryCharts(cats);
   renderGlobal(global);
   renderLevelKPIs(rows);
 }
+
 async function loadChecklist(){
   try{
-    const rows = await fetchChecklistData();
-    const sorted = sortChecklistRows(rows);  // << ordena con fallback
+    const rows = await fetchChecklistRows();     // <<-- ¡aquí estaba el error!
+    const sorted = sortChecklistRows(rows);
     renderChecklist(sorted);
   }catch(e){
     console.error('Error cargando checklist', e);
-    els.checklistContainer.innerHTML = `<div class="muted">Error al cargar checklist: ${e.message||e}</div>`;
+    if (els.checklistContainer) {
+      els.checklistContainer.innerHTML = `<div class="muted">Error al cargar checklist: ${e.message||e}</div>`;
+    }
   }
 }
 
