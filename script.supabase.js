@@ -274,7 +274,7 @@ function sortChecklistRows(rows){
 function renderChecklist(rows){
   // Agrupar por categoría
   const byCat = new Map();
-  for (const r of rows) {
+  for (const r of rows){
     const key = r.category_slug || r.category_id || r.category_name || 'categoria';
     if (!byCat.has(key)) {
       byCat.set(key, {
@@ -286,7 +286,6 @@ function renderChecklist(rows){
   }
 
   const root = els.checklistContainer;
-  if (!root) return;
   root.innerHTML = '';
 
   if (byCat.size === 0){
@@ -298,87 +297,83 @@ function renderChecklist(rows){
   }
 
   for (const [slug, bucket] of byCat.entries()){
-    const wrap = document.createElement('div');
-    wrap.className = 'card';
+    const wrap = document.createElement('section');
+    wrap.className = 'chkCard';
     wrap.id = `cat-${slug}`;
 
+    // Cabecera de categoría
     const head = document.createElement('div');
-    head.className = 'catHead';
+    head.className = 'chkHeader';
 
     const title = document.createElement('h4');
     title.textContent = bucket.name;
-    title.style.margin = '0';
 
     const chip = document.createElement('div');
-    chip.className = 'chip';
-    let doneCount = bucket.items.filter(i => i.done).length;
-    chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
+    chip.className = 'chkChip';
+    const doneInit = bucket.items.filter(i => i.done).length;
+    chip.textContent = `${doneInit}/${bucket.items.length} hechos`;
 
     head.appendChild(title);
     head.appendChild(chip);
     wrap.appendChild(head);
 
+    // Lista de ítems
     const list = document.createElement('div');
-    list.className = 'list';
+    list.className = 'chkList';
+
+    let doneCounter = doneInit;
 
     for (const it of bucket.items){
-      const row = document.createElement('label');
-      row.className = 'item';
+      const row = document.createElement('div');
+      row.className = 'chkRow';
 
-      // 1) Checkbox
+      // Checkbox
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
-
-      cb.addEventListener('change', async ()=>{
-        const beforeChecked = cb.checked;
-        try{
-          await upsertProgress(it.item_id, beforeChecked);
-          // refrescar dashboard
+      cb.addEventListener('change', async () => {
+        try {
+          await upsertProgress(it.item_id, it.category_id, cb.checked);
+          // actualiza dashboard
           await loadDashboard();
-          // recalcular contadores visualmente
-          doneCount = bucket.items.filter(i => i.item_id === it.item_id ? beforeChecked : i.done).length;
-          chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
-        }catch(e){
+          // actualiza contador local de la categoría
+          doneCounter = cb.checked ? doneCounter + 1 : doneCounter - 1;
+          chip.textContent = `${doneCounter}/${bucket.items.length} hechos`;
+        } catch (e) {
           console.error(e);
-          cb.checked = !beforeChecked; // revertir
+          cb.checked = !cb.checked; // revertir en caso de error
         }
       });
 
-      // 2) Contenedor de texto
-      const textWrap = document.createElement('div');
-      textWrap.className = 'itemText';
+      // Contenido: título + badge + descripción
+      const content = document.createElement('div');
 
-      // 2.1 Título del ítem
-      const spanTitle = document.createElement('span');
-      spanTitle.className = 'itemTitle';
-      spanTitle.textContent = it.item_label || it.title || `Ítem ${it.item_id}`;
+      const titleLine = document.createElement('div');
+      titleLine.className = 'chkTitleLine';
 
-      // 2.2 ETIQUETA de nivel
-      const level = (it.item_level || it.level || it.difficulty || '').toString().toLowerCase();
-      const badge = document.createElement('span');
-      badge.className = `badge ${level || 'neutral'}`;
-      badge.textContent = level || 'nivel';
+      const lbl = document.createElement('h5');
+      lbl.className = 'chkTitle';
+      lbl.textContent = it.item_label || `Ítem ${it.item_id}`;
 
-      // 2.3 DESCRIPCIÓN
-      const descText =
-        it.item_description ??
-        it.description ??
-        it.item_detail ??
-        it.details ?? '';
+      const level = document.createElement('span');
+      const lvl = (it.item_level || '').toLowerCase(); // essential | optional | advanced
+      level.className = `badge ${lvl || 'essential'}`;
+      level.textContent = lvl || 'essential';
 
-      if (descText && String(descText).trim() !== '') {
-        const descEl = document.createElement('div');
-        descEl.className = 'itemDesc';
-        descEl.textContent = String(descText).trim();
-        textWrap.appendChild(descEl);
-      }
+      titleLine.appendChild(lbl);
+      titleLine.appendChild(level);
 
-      // ensamblar
-      textWrap.prepend(badge);
-      textWrap.prepend(spanTitle);
+      const desc = document.createElement('p');
+      desc.className = 'chkDesc';
+      desc.textContent = it.item_detail || '';
+
+      content.appendChild(titleLine);
+      content.appendChild(desc);
+
+      // Maquetar fila: [checkbox] [contenido]
       row.appendChild(cb);
-      row.appendChild(textWrap);
+      row.appendChild(content);
+
       list.appendChild(row);
     }
 
@@ -386,6 +381,7 @@ function renderChecklist(rows){
     root.appendChild(wrap);
   }
 }
+
 
 // =====================
 // 8) LOADERS
