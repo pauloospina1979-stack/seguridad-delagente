@@ -531,3 +531,43 @@ body {
 
 /* Por si algún navegador ignora el gap, refuerzo el margen del pill */
 .itemTitleRow .pill{ margin-left: 0; }
+/* --- Separación visual entre título y nivel --- */
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* separa el texto del pill */
+}
+
+.titleWrap .itemTitle {
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.titleWrap .pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  background-color: var(--pill-bg, #f0f0f0);
+  color: var(--pill-color, #333);
+}
+
+/* Colores por nivel */
+.pill.essential { background-color: #e5f5e0; color: #207830; }
+.pill.optional { background-color: #e6f0ff; color: #2447c6; }
+.pill.advanced { background-color: #fde0dc; color: #c62828; }
+/* opcional de estilo */
+.titleWrap{ display:flex; align-items:center; gap:.5rem; }
+.pill{ padding:.125rem .5rem; border-radius:999px; font-size:.8rem; text-transform:capitalize; }
+.pill.essential{ background:#e6fff6; color:#0d7057; }
+.pill.optional{ background:#eef2ff; color:#3340aa; }
+.pill.advanced{ background:#ffeef0; color:#a3313a; }
+.itemRow{ display:flex; gap:1rem; padding:1rem; border-radius:.75rem; background:var(--card-bg,#f7f9fb); margin-bottom:.75rem; }
+.itemRight{ flex:1; }
+.itemDesc{ margin:.35rem 0 0; color:#445; }
+.catHead{ display:flex; align-items:center; justify-content:space-between; margin:1rem 0 .5rem; }
+.catTitle{ margin:0; }
+.chip{ background:#eef3f7; color:#234; padding:.35rem .6rem; border-radius:999px; font-weight:600; }
