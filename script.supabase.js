@@ -133,8 +133,13 @@ async function fetchCategoryProgress(){
 
 async function fetchGlobalProgress(){
   const uid = await getActiveUserId();
-  const { data, error } = await sb.rpc('rpc_global_progress', { user_id: uid });
-  if (error) { console.warn('rpc_global_progress error', error); return { percent:0, total_done:0, total_items:0 }; }
+  const { data, error } = await sb.rpc('rpc_global_progress', { 
+    p_user_id: uid   // 👈 nombre correcto del parámetro
+  });
+  if (error) { 
+    console.warn('rpc_global_progress error', error); 
+    return { percent:0, total_done:0, total_items:0 }; 
+  }
   return data || { percent:0, total_done:0, total_items:0 };
 }
 
@@ -281,6 +286,7 @@ function levelPill(level){
   const map = { essential:'var(--pill-essential)', optional:'var(--pill-optional)', advanced:'var(--pill-advanced)' };
   const pill = document.createElement('span');
   pill.className = 'pill';
+  pill.classList.add(lv);   // 👈 aplica .pill.essential / .pill.optional / .pill.advanced
   pill.textContent = lv;
   pill.style.background = map[lv] || 'var(--pill-essential)';
   return pill;
@@ -313,7 +319,7 @@ function renderChecklist(rows){
 
   for (const [slug, bucket] of byCat.entries()){
     const wrap = document.createElement('section');
-    wrap.className = 'card cat';
+    wrap.className = 'catCard';
 
     const head = document.createElement('div');
     head.className = 'catHead';

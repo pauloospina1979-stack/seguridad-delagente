@@ -508,3 +508,4 @@ body {
   color: #fff;
   transform: rotate(15deg) scale(1.05);
 }
+.titleWrap .pill { margin-left: 6px; }
