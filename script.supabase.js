@@ -298,8 +298,9 @@ function levelPill(level){
 }
 
 function renderChecklist(rows){
+  // Agrupar por categoría
   const byCat = new Map();
-  for(const r of rows){
+  for (const r of rows){
     const slug = r.category_slug || r.category_id || 'categoria';
     if (!byCat.has(slug)){
       byCat.set(slug, {
@@ -322,22 +323,30 @@ function renderChecklist(rows){
     return;
   }
 
+  // Construir cada categoría
   for (const [slug, bucket] of byCat.entries()){
     const wrap = document.createElement('section');
     wrap.className = 'catCard';
+    wrap.id = `cat-${slug}`;
 
+    // Encabezado de categoría
     const head = document.createElement('div');
     head.className = 'catHead';
+
     const h3 = document.createElement('h3');
+    h3.className = 'catTitle';
     h3.textContent = bucket.name;
+
     const chip = document.createElement('div');
     chip.className = 'chip';
-    const doneCount = bucket.items.filter(i=>i.done).length;
-    chip.textContent = `${doneCount}/${bucket.items.length} hechos`;
+    const initialDone = bucket.items.filter(i=>i.done).length;
+    chip.textContent = `${initialDone}/${bucket.items.length} hechos`;
+
     head.appendChild(h3);
     head.appendChild(chip);
     wrap.appendChild(head);
 
+    // Lista de ítems
     const list = document.createElement('div');
     list.className = 'list';
 
@@ -345,86 +354,58 @@ function renderChecklist(rows){
       const row = document.createElement('div');
       row.className = 'itemRow';
 
-      const left = document.createElement('div');
-      left.className = 'itemLeft';
+      // Checkbox
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
-      // ⬇️ NUEVO contenedor para Título + Pill de nivel
-      const head = document.createElement('div');
-      head.className = 'itemTitleRow';
-      const title = document.createElement('h5');
-      title.className = 'itemTitle';
-      title.textContent = it.item_label || `Ítem ${it.item_id}`;
 
-      const lvl = levelPill(it.item_level); // tu función levelPill
-
-      head.appendChild(title);
-      head.appendChild(lvl);
-
-      // Descripción (si la columna se llama item_description en tu vista)
-      if (it.item_description) {
-        const desc = document.createElement('p');
-        desc.className = 'itemDesc';
-        desc.textContent = it.item_description;
-        // Lo agregamos más abajo, después del checkbox y head
-      }
-
-      row.appendChild(cb);
-      row.appendChild(head);
-
-      if (it.item_description) {
-        const desc = document.createElement('p');
-        desc.className = 'itemDesc';
-        desc.textContent = it.item_description;
-        row.appendChild(desc);
-      }
-
-      // ... lo que ya tengas para manejar eventos y appends al listado
-      cb.addEventListener('change', async ()=>{
-        try{
-          await upsertProgress(it.item_id, cb.checked);
-          // refrescar chips y dashboard
-          await loadDashboard();
-          const newDone = (cb.checked ? doneCount+1 : doneCount-1);
-          chip.textContent = `${newDone}/${bucket.items.length} hechos`;
-        }catch(e){
-          console.error(e);
-          cb.checked = !cb.checked;
-        }
-      });
-      left.appendChild(cb);
-
+      // Contenido (título + pill + descripción)
       const right = document.createElement('div');
       right.className = 'itemRight';
 
       const titleWrap = document.createElement('div');
       titleWrap.className = 'titleWrap';
 
-      const title = document.createElement('strong');
-      title.textContent = it.item_label || `Ítem ${it.item_id}`;
-      titleWrap.appendChild(title);
+      const titleEl = document.createElement('strong');   // <- nombre distinto
+      titleEl.className = 'itemTitle';
+      titleEl.textContent = it.item_label || `Ítem ${it.item_id}`;
 
-      titleWrap.appendChild(levelPill(it.item_level));
+      const pill = levelPill(it.item_level);
+
+      titleWrap.appendChild(titleEl);
+      titleWrap.appendChild(pill);
 
       const p = document.createElement('p');
-      // 👇 Aceptamos item_description (tu vista) y también item_detail (por compatibilidad)
-      const desc = it.item_description ?? it.item_detail ?? '';
-      p.textContent = desc;
+      p.className = 'itemDesc';
+      p.textContent = it.item_description ?? it.item_detail ?? '';
 
       right.appendChild(titleWrap);
       right.appendChild(p);
 
-      row.appendChild(left);
+      // Componer fila
+      row.appendChild(cb);
       row.appendChild(right);
       list.appendChild(row);
+
+      // Guardar / actualizar progreso
+      cb.addEventListener('change', async ()=>{
+        try{
+          await upsertProgress(it.item_id, cb.checked);
+          await loadDashboard(); // refresca gráficos y global
+          const newDone = (cb.checked ? initialDone+1 : initialDone-1);
+          chip.textContent = `${newDone}/${bucket.items.length} hechos`;
+        }catch(e){
+          console.error(e);
+          cb.checked = !cb.checked;
+        }
+      });
     }
 
-    wrap.id = `cat-${slug}`;
     wrap.appendChild(list);
     root.appendChild(wrap);
   }
 }
+
 
 // =====================
 // 8) LOADERS
