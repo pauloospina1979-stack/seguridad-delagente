@@ -392,6 +392,8 @@ function renderChecklist(rows){
         try{
           await upsertProgress(it.item_id, cb.checked);
           await loadDashboard(); // refresca gráficos y global
+          const { data, error } = await sb.rpc('rpc_progress_by_level', { p_user_id: uid });
+          if (error) console.warn('rpc_progress_by_level error', error);
           const newDone = (cb.checked ? initialDone+1 : initialDone-1);
           chip.textContent = `${newDone}/${bucket.items.length} hechos`;
         }catch(e){
@@ -410,15 +412,53 @@ function renderChecklist(rows){
 // =====================
 // 8) LOADERS
 // =====================
-async function loadDashboard(){
-  try{
-    const [catRows, global, kpis] = await Promise.all([
-      fetchCategoryProgress().catch(_=>[]),
-      fetchGlobalProgress().catch(_=>({percent:0,total_done:0,total_items:0})),
+// === Carga todo el dashboard en paralelo ===
+async function loadDashboard() {
+  try {
+    const [catRows, global, lvlRows] = await Promise.all([
+      fetchCategoryProgress().catch(() => []),
+      fetchGlobalProgress().catch(() => ({ percent: 0, total_done: 0, total_items: 0 })),
+      fetchProgressByLevel().catch(() => ([
+        { level: 'essential', percent: 0 },
+        { level: 'optional',  percent: 0 },
+        { level: 'advanced',  percent: 0 },
+      ]))
+    ]);
+
+    renderCategoryCharts(catRows);
+    renderGlobalSummary(global);
+    renderProgressLevels(lvlRows);
+
+  } catch (e) {
+    console.error('Error cargando dashboard', e);
+  }
+}
+
+
       fetchKPIsByLevel().catch(_=>({ essential:{pct:0}, optional:{pct:0}, advanced:{pct:0} }))
     ]);
     renderCategoryCharts(catRows);
     renderGlobalSummary(global);
+    // === Escribe los KPIs de nivel en el dashboard ===
+// Espera elementos con id: #prog-essential, #prog-optional, #prog-advanced
+function renderProgressLevels(rows) {
+  const pctByLevel = { essential: 0, optional: 0, advanced: 0 };
+
+  (rows || []).forEach(r => {
+    const key = String(r.level || '').toLowerCase();
+    if (key in pctByLevel) pctByLevel[key] = Number(r.percent) || 0;
+  });
+
+  const setPct = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `${Math.round(v)}%`;
+  };
+
+  setPct('prog-essential', pctByLevel.essential);
+  setPct('prog-optional',  pctByLevel.optional);
+  setPct('prog-advanced',  pctByLevel.advanced);
+}
+
     renderKPIs(kpis);
   }catch(e){
     console.error('Error cargando dashboard', e);
