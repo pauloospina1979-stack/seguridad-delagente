@@ -131,17 +131,22 @@ async function fetchCategoryProgress(){
   return data || [];
 }
 
-async function fetchGlobalProgress(){
+async function fetchGlobalProgress() {
   const uid = await getActiveUserId();
-  const { data, error } = await sb.rpc('rpc_global_progress', { 
-    p_user_id: uid   // 👈 nombre correcto del parámetro
-  });
-  if (error) { 
-    console.warn('rpc_global_progress error', error); 
-    return { percent:0, total_done:0, total_items:0 }; 
+
+  // Tu RPC acepta p_user_id
+  const { data, error } = await sb.rpc('rpc_global_progress', { p_user_id: uid });
+
+  if (error) {
+    console.warn('rpc_global_progress error', error);
+    return { percent: 0, total_done: 0, total_items: 0 };
   }
-  return data || { percent:0, total_done:0, total_items:0 };
+
+  // 👇 Al devolver RETURNS TABLE, Supabase suele regresar [ { total_done, total_items, percent } ]
+  const row = Array.isArray(data) ? data[0] : data;
+  return row || { percent: 0, total_done: 0, total_items: 0 };
 }
+
 
 async function fetchKPIsByLevel(){
   // KPIs por nivel (essential/optional/advanced) desde items + progress
@@ -345,6 +350,37 @@ function renderChecklist(rows){
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = !!it.done;
+      // ⬇️ NUEVO contenedor para Título + Pill de nivel
+      const head = document.createElement('div');
+      head.className = 'itemTitleRow';
+      const title = document.createElement('h5');
+      title.className = 'itemTitle';
+      title.textContent = it.item_label || `Ítem ${it.item_id}`;
+
+      const lvl = levelPill(it.item_level); // tu función levelPill
+
+      head.appendChild(title);
+      head.appendChild(lvl);
+
+      // Descripción (si la columna se llama item_description en tu vista)
+      if (it.item_description) {
+        const desc = document.createElement('p');
+        desc.className = 'itemDesc';
+        desc.textContent = it.item_description;
+        // Lo agregamos más abajo, después del checkbox y head
+      }
+
+      row.appendChild(cb);
+      row.appendChild(head);
+
+      if (it.item_description) {
+        const desc = document.createElement('p');
+        desc.className = 'itemDesc';
+        desc.textContent = it.item_description;
+        row.appendChild(desc);
+      }
+
+      // ... lo que ya tengas para manejar eventos y appends al listado
       cb.addEventListener('change', async ()=>{
         try{
           await upsertProgress(it.item_id, cb.checked);

@@ -509,3 +509,25 @@ body {
   transform: rotate(15deg) scale(1.05);
 }
 .titleWrap .pill { margin-left: 6px; }
+/* Fila para Título + Pill (estilo SAFE) */
+.itemTitleRow{
+  display:flex;
+  align-items:center;
+  gap:8px;                 /* ← separa el pill del título */
+}
+
+.itemTitle{
+  margin:0;
+  font-weight:600;
+  line-height:1.2;
+}
+
+/* Descripción del ítem */
+.itemDesc{
+  margin:6px 0 0 36px;     /* un poco a la derecha para alinearse con el checkbox */
+  color:var(--muted, #5b6470);
+  line-height:1.45;
+}
+
+/* Por si algún navegador ignora el gap, refuerzo el margen del pill */
+.itemTitleRow .pill{ margin-left: 0; }
