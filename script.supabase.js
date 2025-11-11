@@ -133,31 +133,48 @@ async function fetchGlobalProgress(){
 }
 
 // Si tienes rpc_progress_by_level → úsala; si no, cómputo local.
+// Reemplaza por completo tu función fetchProgressByLevel con esta:
 async function fetchProgressByLevel(){
   const uid = await getActiveUserId();
 
-  // 1) intento por RPC
-  const tryRpc = await sb.rpc('rpc_progress_by_level', { p_user_id: uid });
-  if (!tryRpc.error && tryRpc.data){
-    return tryRpc.data; // [{level:'essential', percent:..}, ...]
-  }
+  // 1) Intento RPC (si existiera en tu proyecto)
+  try {
+    const rpc = await sb.rpc('rpc_progress_by_level', { p_user_id: uid });
+    if (!rpc.error && rpc.data && rpc.data.length) {
+      return rpc.data; // [{level:'essential', percent:..}, ...]
+    }
+  } catch (_) { /* ignoramos si no existe */ }
 
-  // 2) fallback local (items + progress)
-  const { data, error } = await sb
+  // 2) Fallback robusto (dos consultas sin relaciones)
+  const { data: items, error: e1 } = await sb
     .from('items')
-    .select('id,difficulty,progress:progress!left(user_id,completed)')
-  if (error){ console.warn('fallback progress_by_level error', error); return []; }
+    .select('id,difficulty');
+  if (e1) { console.warn('items error', e1); return []; }
 
-  const agg = { essential:{done:0,total:0}, optional:{done:0,total:0}, advanced:{done:0,total:0} };
-  for(const it of data){
+  const { data: prog, error: e2 } = await sb
+    .from('progress')
+    .select('item_id')
+    .eq('user_id', uid)
+    .eq('completed', true);
+  if (e2) { console.warn('progress error', e2); return []; }
+
+  const doneSet = new Set((prog || []).map(p => p.item_id));
+
+  const agg = {
+    essential: { done:0, total:0 },
+    optional:  { done:0, total:0 },
+    advanced:  { done:0, total:0 }
+  };
+
+  for (const it of (items || [])){
     const lvl = (it.difficulty || 'essential').toLowerCase();
     if (!agg[lvl]) continue;
     agg[lvl].total++;
-    const isDone = it.progress?.some?.(p => p.user_id === uid && p.completed) ? 1 : 0;
-    agg[lvl].done += isDone;
+    if (doneSet.has(it.id)) agg[lvl].done++;
   }
-  return Object.entries(agg).map(([k,v]) => ({
-    level: k,
+
+  return Object.entries(agg).map(([level, v]) => ({
+    level,
     percent: v.total ? Math.round(v.done * 100 / v.total) : 0
   }));
 }
